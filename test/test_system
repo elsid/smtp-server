@@ -1,0 +1,7 @@
+#!/bin/bash
+
+valgrind --leak-check=full --show-leak-kinds=all --trace-children=yes bin/smtp-server etc/test_system.cfg &
+test/test_system.py -v
+for pid in $(pgrep smtp-server); do
+    kill -9 $pid
+done

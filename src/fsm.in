@@ -1,0 +1,143 @@
+/* START === USER HEADERS === DO NOT CHANGE THIS COMMENT */
+#include "handle.h"
+#include "log.h"
+
+te_smtp_server_state select_next_state(
+        transition_result_t result,
+        te_smtp_server_state previous,
+        te_smtp_server_state next)
+{
+    switch (result) {
+        case TRANSITION_SUCCEED:
+            return next;
+        case TRANSITION_WAIT:
+        case TRANSITION_FAILED:
+            return previous;
+        case TRANSITION_ERROR:
+            return SMTP_SERVER_ST_ERROR;
+        default:
+            PRINT_STDERR("bad transition result: %d", result);
+            abort();
+    }
+}
+
+#define SELECT_NEXT_STATE(result) select_next_state(result, initial, maybe_next)
+/* END   === USER HEADERS === DO NOT CHANGE THIS COMMENT */
+
+    /* START == INVALID TRANS MSG == DO NOT CHANGE THIS COMMENT */
+    /* END   == INVALID TRANS MSG == DO NOT CHANGE THIS COMMENT */
+
+/*  START == ERROR EHLO == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_ehlo(state));
+/*  END   == ERROR EHLO == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == ERROR QUIT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_quit(state));
+/*  END   == ERROR QUIT == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == ERROR RSET == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rset(state));
+/*  END   == ERROR RSET == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == ERROR VRFY == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_vrfy(state));
+/*  END   == ERROR VRFY == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == CONNECTED BEGIN == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_begin(state));
+/*  END   == CONNECTED BEGIN == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == INIT EHLO == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_ehlo(state));
+/*  END   == INIT EHLO == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == INIT QUIT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_quit(state));
+/*  END   == INIT QUIT == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == INIT RSET == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rset(state));
+/*  END   == INIT RSET == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == INIT VRFY == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_vrfy(state));
+/*  END   == INIT VRFY == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MAIL EHLO == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_ehlo(state));
+/*  END   == WAIT MAIL EHLO == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MAIL QUIT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_quit(state));
+/*  END   == WAIT MAIL QUIT == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MAIL RSET == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rset(state));
+/*  END   == WAIT MAIL RSET == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MAIL VRFY == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_vrfy(state));
+/*  END   == WAIT MAIL VRFY == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT EHLO == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_ehlo(state));
+/*  END   == WAIT RCPT EHLO == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT QUIT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_quit(state));
+/*  END   == WAIT RCPT QUIT == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT RSET == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rset(state));
+/*  END   == WAIT RCPT RSET == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT VRFY == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_vrfy(state));
+/*  END   == WAIT RCPT VRFY == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == INVALID == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_invalid(state));
+/*  END   == INVALID == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MAIL MAIL == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_mail(state));
+/*  END   == WAIT MAIL MAIL == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MORE DATA DATA END == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_data_end(state));
+/*  END   == WAIT MORE DATA DATA END == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT MORE DATA MORE DATA == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_data(state));
+/*  END   == WAIT MORE DATA MORE DATA == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT OR DATA EHLO == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_ehlo(state));
+/*  END   == WAIT RCPT OR DATA EHLO == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT OR DATA QUIT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_quit(state));
+/*  END   == WAIT RCPT OR DATA QUIT == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT OR DATA RSET == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rset(state));
+/*  END   == WAIT RCPT OR DATA RSET == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT OR DATA VRFY == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_vrfy(state));
+/*  END   == WAIT RCPT OR DATA VRFY == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT OR DATA DATA == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_data_begin(state));
+/*  END   == WAIT RCPT OR DATA DATA == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT OR DATA RCPT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rcpt(state));
+/*  END   == WAIT RCPT OR DATA RCPT == DO NOT CHANGE THIS COMMENT  */
+
+/*  START == WAIT RCPT RCPT == DO NOT CHANGE THIS COMMENT  */
+    return SELECT_NEXT_STATE(handle_rcpt(state));
+/*  END   == WAIT RCPT RCPT == DO NOT CHANGE THIS COMMENT  */
+
+    /* START == FINISH STEP == DO NOT CHANGE THIS COMMENT */
+    /* END   == FINISH STEP == DO NOT CHANGE THIS COMMENT */
