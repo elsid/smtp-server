@@ -10,12 +10,14 @@ typedef enum worker_status {
 } worker_status_t;
 
 typedef struct worker {
-    pid_t pid;
-    int sock;
-    worker_status_t status;
+    pid_t __pid;
+    int __sock;
+    worker_status_t __status;
 } worker_t;
 
 int worker_init(worker_t *worker, const settings_t *settings, log_t *log);
 void worker_destroy(worker_t *worker);
+int worker_send_socket(worker_t *worker, const int sock);
+worker_status_t worker_status(const worker_t *worker);
 
 #endif

@@ -48,10 +48,10 @@ static void abort_write(transaction_t *transaction)
 
     transaction->__aiocb.aio_fildes = -1;
 
-    recipient_t *recipient = transaction->first_recipient;
+    recipient_t *recipient = transaction->__first_recipient;
     maildir_t *maildir = &recipient->maildir;
 
-    maildir_remove_file(maildir, transaction->data_filename);
+    maildir_remove_file(maildir, transaction->__data_filename);
 }
 
 static int generate_filename(transaction_t *transaction)
@@ -63,8 +63,8 @@ static int generate_filename(transaction_t *transaction)
         return -1;
     }
 
-    const size_t max_len = sizeof(transaction->data_filename) - 1;
-    char *name = transaction->data_filename;
+    const size_t max_len = sizeof(transaction->__data_filename) - 1;
+    char *name = transaction->__data_filename;
     char hostname[256];
 
     if (gethostname(hostname, sizeof(hostname) - 1) < 0) {
@@ -87,7 +87,7 @@ static int create_file(transaction_t *transaction)
         return -1;
     }
 
-    recipient_t *recipient = transaction->first_recipient;
+    recipient_t *recipient = transaction->__first_recipient;
     maildir_t *maildir = &recipient->maildir;
 
     if (maildir_init(maildir, transaction->settings->maildir,
@@ -95,7 +95,7 @@ static int create_file(transaction_t *transaction)
         return -1;
     }
 
-    return maildir_create_file(maildir, transaction->data_filename);
+    return maildir_create_file(maildir, transaction->__data_filename);
 }
 
 static int continue_dump_data(transaction_t *transaction, const char *value,
@@ -212,7 +212,7 @@ static transaction_status_t async_dump_data(transaction_t *transaction,
 static int end_write(transaction_t *transaction)
 {
     if (close(transaction->__aiocb.aio_fildes) < 0) {
-        PRINT_STDERR("error close file: %s", transaction->data_filename);
+        PRINT_STDERR("error close file: %s", transaction->__data_filename);
         return -1;
     }
 
@@ -276,12 +276,12 @@ static void free_header(transaction_t *transaction)
 static char *generate_header(transaction_t *transaction)
 {
     char from_tcp[100];
-    if (get_remote_hostname(transaction->sock, from_tcp, sizeof(from_tcp)) < 0) {
+    if (get_remote_hostname(transaction->__sock, from_tcp, sizeof(from_tcp)) < 0) {
         return NULL;
     }
 
     char by_tcp[100];
-    if (get_local_hostname(transaction->sock, by_tcp, sizeof(by_tcp)) < 0) {
+    if (get_local_hostname(transaction->__sock, by_tcp, sizeof(by_tcp)) < 0) {
         return NULL;
     }
 
@@ -294,7 +294,7 @@ static char *generate_header(transaction_t *transaction)
     const char *from_domain = transaction->__domain ? transaction->__domain : "";
     const char *return_path = transaction->__reverse_path;
     static const char via[] = "SMTP";
-    const char *for_ = transaction->first_recipient->address;
+    const char *for_ = transaction->__first_recipient->address;
 
     struct timeval timeval;
 
@@ -345,19 +345,19 @@ int transaction_init(transaction_t *transaction, const settings_t *settings,
 {
     transaction->settings = settings;
     transaction->log = log;
-    transaction->sock = sock;
+    transaction->__sock = sock;
     transaction->__domain = NULL;
     transaction->__header = NULL;
     transaction->__reverse_path = NULL;
-    transaction->first_recipient = NULL;
+    transaction->__first_recipient = NULL;
     LIST_INIT(&transaction->__recipient_list);
-    transaction->is_active = 0;
+    transaction->__is_active = 0;
 
     memset(&transaction->__aiocb, 0, sizeof(transaction->__aiocb));
 
     transaction->__aiocb.aio_fildes = -1;
 
-    memset(transaction->data_filename, 0, sizeof(transaction->data_filename));
+    memset(transaction->__data_filename, 0, sizeof(transaction->__data_filename));
 
     return 0;
 }
@@ -382,7 +382,7 @@ void transaction_rollback(transaction_t *transaction)
 
     transaction_reset_data(transaction);
 
-    transaction->is_active = 0;
+    transaction->__is_active = 0;
 }
 
 static int set_value(char **dst, const char *value, const size_t length)
@@ -445,8 +445,8 @@ int transaction_add_forward_path(transaction_t *transaction, const char *value,
 
     LIST_INSERT_HEAD(&transaction->__recipient_list, item, entry);
 
-    if (NULL == transaction->first_recipient) {
-        transaction->first_recipient = &item->recipient;
+    if (NULL == transaction->__first_recipient) {
+        transaction->__first_recipient = &item->recipient;
     }
 
     return 0;
@@ -463,7 +463,7 @@ void transaction_reset_data(transaction_t *transaction)
     transaction->__aiocb.aio_nbytes = 0;
     transaction->__aiocb.aio_lio_opcode = LIO_NOP;
 
-    memset(transaction->data_filename, 0, sizeof(transaction->data_filename));
+    memset(transaction->__data_filename, 0, sizeof(transaction->__data_filename));
 }
 
 ssize_t transaction_add_data(transaction_t *transaction, const char *value,
@@ -519,7 +519,7 @@ int transaction_add_header(transaction_t *transaction)
 
 int transaction_begin(transaction_t *transaction)
 {
-    assert(!transaction->is_active);
+    assert(!transaction->__is_active);
 
     free_header(transaction);
     free_reverse_path(transaction);
@@ -529,15 +529,15 @@ int transaction_begin(transaction_t *transaction)
 
     transaction_reset_data(transaction);
 
-    transaction->first_recipient = NULL;
-    transaction->is_active = 1;
+    transaction->__first_recipient = NULL;
+    transaction->__is_active = 1;
 
     return 0;
 }
 
 transaction_status_t transaction_commit(transaction_t *transaction)
 {
-    if (!transaction->is_active) {
+    if (!transaction->__is_active) {
         return TRANSACTION_ERROR;
     }
 
@@ -547,10 +547,10 @@ transaction_status_t transaction_commit(transaction_t *transaction)
                 return TRANSACTION_ERROR;
             }
 
-            struct recipient *recipient = transaction->first_recipient;
+            struct recipient *recipient = transaction->__first_recipient;
             maildir_t *maildir = &recipient->maildir;
 
-            if (maildir_move_to_new(maildir, transaction->data_filename) < 0) {
+            if (maildir_move_to_new(maildir, transaction->__data_filename) < 0) {
                 return TRANSACTION_ERROR;
             }
 
@@ -564,13 +564,13 @@ transaction_status_t transaction_commit(transaction_t *transaction)
                         return TRANSACTION_ERROR;
                     }
 
-                    if (maildir_clone_file(maildir, &current->maildir, transaction->data_filename) < 0) {
+                    if (maildir_clone_file(maildir, &current->maildir, transaction->__data_filename) < 0) {
                         return TRANSACTION_ERROR;
                     }
                 }
             }
 
-            transaction->is_active = 0;
+            transaction->__is_active = 0;
 
             return TRANSACTION_DONE;
 
@@ -581,4 +581,14 @@ transaction_status_t transaction_commit(transaction_t *transaction)
             abort_write(transaction);
             return TRANSACTION_ERROR;
     }
+}
+
+int transaction_is_active(const transaction_t *transaction)
+{
+    return transaction->__is_active;
+}
+
+const char *transaction_data_filename(const transaction_t *transaction)
+{
+    return transaction->__data_filename;
 }

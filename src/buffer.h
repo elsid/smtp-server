@@ -4,10 +4,10 @@
 #include <sys/types.h>
 
 typedef struct buffer {
-    char *data;
-    size_t read_pos;
-    size_t write_pos;
-    size_t size;
+    char *__data;
+    size_t __read_pos;
+    size_t __write_pos;
+    size_t __size;
 } buffer_t;
 
 int buffer_init(buffer_t *buf, const size_t size);

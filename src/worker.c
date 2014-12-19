@@ -6,7 +6,6 @@
 #include "protocol.h"
 #include "signal_handle.h"
 #include "worker.h"
-#include "time.h"
 
 static void do_nothing(int signum) {}
 
@@ -193,7 +192,7 @@ static void remove_client_node(server_t *server, client_node_t *node)
 
 static void remove_client(server_t *server, context_t *context)
 {
-    const int sock = context->sock;
+    const int sock = context->socket;
 
     log_write(server->log, "[%s] close connection", context->uuid);
 
@@ -263,7 +262,7 @@ static int serve_client_in(context_t *context)
             break;
         }
 
-        const ssize_t received = recv(context->sock, buffer_write_begin(in_buf),
+        const ssize_t received = recv(context->socket, buffer_write_begin(in_buf),
             space, 0);
 
         if (received < 0) {
@@ -291,7 +290,7 @@ static int serve_client_out(context_t *context)
         buffer_t *out_buf = buffer_tailq_front(&context->out_message_queue);
 
         if (buffer_left(out_buf) > 0) {
-            const ssize_t sent = send(context->sock, buffer_read_begin(out_buf),
+            const ssize_t sent = send(context->socket, buffer_read_begin(out_buf),
                 buffer_left(out_buf), 0);
 
             if (sent < 0) {
@@ -354,10 +353,6 @@ static int serve_client(server_t *server, struct pollfd *pollfd)
             log_write(context->log, "[%s] receive command error: %s",
                 context->uuid, strerror(errno));
         }
-        if (gettimeofday(&context->last_action_time, NULL) < 0) {
-            CALL_ERR("gettimeofday");
-            return -1;
-        }
     }
 
     if (process_client(context) < 0) {
@@ -370,36 +365,15 @@ static int serve_client(server_t *server, struct pollfd *pollfd)
             log_write(context->log, "[%s] send command error: %s",
                 context->uuid, strerror(errno));
         }
-        if (gettimeofday(&context->last_action_time, NULL) < 0) {
-            CALL_ERR("gettimeofday");
-            return -1;
-        }
     }
 
-    struct timeval current_time;
-
-    if (gettimeofday(&current_time, NULL) < 0) {
-        CALL_ERR("gettimeofday");
-        return 0;
-    }
-
-    struct timeval diff;
-    timeval_diff(&diff, &context->last_action_time, &current_time);
-    const long long duration = timeval_to_msec(&diff);
-
-    if (duration > server->settings->timeout) {
-        log_write(context->log, "[%s] timeout after %ld msec",
-            context->uuid, duration);
-        remove_client(server, context);
-        return 0;
-    }
-
-    if (SMTP_SERVER_ST_DONE == context->state) {
-        if (shutdown(context->sock, SHUT_RD) < 0) {
+    if (SMTP_SERVER_ST_DONE == context->state
+            || SMTP_SERVER_ST_INVALID == context->state) {
+        if (shutdown(context->socket, SHUT_RD) < 0) {
             CALL_ERR("shutdown");
         }
         if (buffer_tailq_empty(&context->out_message_queue)) {
-            if (shutdown(context->sock, SHUT_RDWR) < 0) {
+            if (shutdown(context->socket, SHUT_RDWR) < 0) {
                 CALL_ERR("shutdown");
             }
         }
@@ -514,6 +488,50 @@ static int worker_run(const int pipe_fd, const settings_t *settings, log_t *log)
     return result;
 }
 
+static int send_message(const int fd, const void *data, const size_t size)
+{
+    char iov_data[1] = {0};
+
+    struct iovec iov = {
+        .iov_base = iov_data,
+        .iov_len = sizeof(iov_data)
+    };
+
+    char buffer[CMSG_SPACE(sizeof(int))];
+
+    struct msghdr hdr = {
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = &iov,
+        .msg_iovlen = iov.iov_len,
+        .msg_control = buffer,
+        .msg_controllen = sizeof(buffer)
+    };
+
+    struct cmsghdr *msg = CMSG_FIRSTHDR(&hdr);
+
+    msg->cmsg_level = SOL_SOCKET;
+    msg->cmsg_type = SCM_RIGHTS;
+    msg->cmsg_len = CMSG_LEN(size);
+
+    memcpy(CMSG_DATA(msg), data, size);
+
+    hdr.msg_controllen = msg->cmsg_len;
+
+    ssize_t written;
+
+    do {
+        written = sendmsg(fd, &hdr, MSG_NOSIGNAL);
+    } while (written < 0 && EINTR == errno);
+
+    if (written < 0) {
+        CALL_ERR("sendmsg");
+        return -1;
+    }
+
+    return 0;
+}
+
 int worker_init(worker_t *worker, const settings_t *settings, log_t *log)
 {
     int fd[2];
@@ -540,20 +558,35 @@ int worker_init(worker_t *worker, const settings_t *settings, log_t *log)
         CALL_ERR("close");
     }
 
-    worker->pid = worker_pid;
-    worker->sock = fd[1];
-    worker->status = WORKER_RUNNING;
+    worker->__pid = worker_pid;
+    worker->__sock = fd[1];
+    worker->__status = WORKER_RUNNING;
 
     return 0;
 }
 
 void worker_destroy(worker_t *worker)
 {
-    if (close(worker->sock) < 0) {
-        CALL_ERR_ARGS("close", "%d", worker->sock);
+    if (close(worker->__sock) < 0) {
+        CALL_ERR_ARGS("close", "%d", worker->__sock);
     }
 
-    if (waitpid(worker->pid, NULL, 0) < 0) {
-        CALL_ERR_ARGS("waitpid", "%d", worker->pid);
+    if (waitpid(worker->__pid, NULL, 0) < 0) {
+        CALL_ERR_ARGS("waitpid", "%d", worker->__pid);
     }
+}
+
+int worker_send_socket(worker_t *worker, const int sock)
+{
+    if (send_message(worker->__sock, &sock, sizeof(sock)) < 0) {
+        worker->__status = WORKER_ERROR;
+        return -1;
+    }
+
+    return 0;
+}
+
+worker_status_t worker_status(const worker_t *worker)
+{
+    return worker->__status;
 }

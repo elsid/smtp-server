@@ -1,0 +1,54 @@
+@startuml
+
+client -> server : connect
+activate server
+server -> log : accept connection
+server -> worker : socket
+deactivate server
+activate worker
+client <- worker : 220
+deactivate worker
+
+client -> worker : ehlo client.net
+activate worker
+client <- worker : 250
+deactivate worker
+
+client -> worker : mail from@source.net
+activate worker
+worker -> log : begin transaction
+client <- worker : 250
+deactivate worker
+
+client -> worker : rcpt to_first@target.net
+activate worker
+client <- worker : 250
+deactivate worker
+
+client -> worker : rcpt to_second@server.net
+activate worker
+client <- worker : 250
+deactivate worker
+
+client -> worker : data
+activate worker
+client <- worker : 354
+worker -> maildir : open file
+deactivate worker
+
+client -> worker : first line
+activate worker
+worker -> maildir : write
+client -> worker : .
+worker -> maildir : close file
+worker -> log : commit transaction
+client <- worker : 250
+deactivate worker
+
+client -> worker : quit
+activate worker
+client <- worker : 221
+worker -> log : connection closed
+deactivate worker
+
+@enduml

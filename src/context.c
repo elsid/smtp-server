@@ -38,8 +38,8 @@ int context_init(context_t *context, const int sock, const settings_t *settings,
 
     context->uuid[sizeof(context->uuid) - 1] = '\0';
     context->settings = settings;
-    context->state = SMTP_SERVER_ST_CONNECTED;
-    context->sock = sock;
+    context->state = SMTP_SERVER_ST_INIT;
+    context->socket = sock;
     context->is_wait_transition = 0;
     context->log = log;
     context->last_action_time = context->init_time;

@@ -8,7 +8,7 @@ from unittest import TestCase, main
 
 HOST = 'localhost'
 PORT = 25253
-TIMEOUT = 0.11
+TIMEOUT = 0.2
 COUNT = 3
 
 class HeloTest(TestCase):
@@ -197,7 +197,7 @@ class IncorrectCommandTest(TestCase):
         assert_that(calling(run), raises(SMTPResponseException))
 
 class TimeoutTest(TestCase):
-    def test_empty_should_return_error(self):
+    def test_connect_than_sleep_should_return_error(self):
         with SMTP() as smtp:
             assert_that(smtp.connect(HOST, PORT), equal_to((220, b'Service ready')))
             sleep(TIMEOUT)

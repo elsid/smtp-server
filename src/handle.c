@@ -15,14 +15,14 @@ transition_result_t handle_begin(context_t *context)
 
 transition_result_t handle_ehlo(context_t *context)
 {
-    if (context->transaction.is_active) {
+    if (context->transaction.__is_active) {
         transaction_rollback(&context->transaction);
         log_write(context->log, "[%s] rollback transaction", context->uuid);
     }
 
     buffer_t *in_buf = &context->in_message;
     size_t domain_length;
-    const char *domain = parse_domain(in_buf, &domain_length);
+    const char *domain = parse_ehlo_helo(in_buf, &domain_length);
 
     if (domain != NULL) {
         if (transaction_set_domain(&context->transaction, domain, domain_length) < 0) {
@@ -46,7 +46,7 @@ transition_result_t handle_ehlo(context_t *context)
 
 transition_result_t handle_rset(context_t *context)
 {
-    if (context->transaction.is_active) {
+    if (context->transaction.__is_active) {
         transaction_rollback(&context->transaction);
         log_write(context->log, "[%s] rollback transaction", context->uuid);
     }
@@ -84,7 +84,7 @@ transition_result_t handle_mail(context_t *context)
 {
     buffer_t *in_buf = &context->in_message;
     size_t reverse_path_length;
-    const char *reverse_path = parse_reverse_path(in_buf, &reverse_path_length);
+    const char *reverse_path = parse_mail(in_buf, &reverse_path_length);
 
     if (NULL == reverse_path) {
         if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
@@ -130,7 +130,7 @@ transition_result_t handle_rcpt(context_t *context)
 {
     buffer_t *in_buf = &context->in_message;
     size_t forward_path_length;
-    const char *forward_path = parse_forward_path(in_buf, &forward_path_length);
+    const char *forward_path = parse_rcpt(in_buf, &forward_path_length);
 
     if (NULL == forward_path) {
         if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
@@ -261,7 +261,7 @@ transition_result_t handle_data_end(context_t *context)
     }
 
     log_write(context->log, "[%s] commit transaction, file saved: %s",
-        context->uuid, context->transaction.data_filename);
+        context->uuid, context->transaction.__data_filename);
 
     return TRANSITION_SUCCEED;
 }

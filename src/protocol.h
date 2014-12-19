@@ -2,8 +2,8 @@
 #define SMTP_SERVER_PROTOCOL_H
 
 #include "context.h"
+#include "parse.h"
 
-#define CRLF "\r\n"
 #define DATA "data"
 #define DATA_END "." CRLF
 #define EHLO "ehlo"

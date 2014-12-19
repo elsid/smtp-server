@@ -4,6 +4,7 @@
 #include "fsm.h"
 #include "log.h"
 #include "protocol.h"
+#include "time.h"
 
 const char *event_string(const te_smtp_server_event event)
 {
@@ -26,8 +27,6 @@ const char *event_string(const te_smtp_server_event event)
             return "data_end";
         case SMTP_SERVER_EV_QUIT:
             return "quit";
-        case SMTP_SERVER_EV_VRFY:
-            return "vrfy";
         case SMTP_SERVER_EV_INVALID:
             return "invalid";
         default:
@@ -40,8 +39,8 @@ const char *state_string(const te_smtp_server_state state)
     switch (state) {
         case SMTP_SERVER_ST_INIT:
             return "init";
-        case SMTP_SERVER_ST_CONNECTED:
-            return "connected";
+        case SMTP_SERVER_ST_WAIT_EHLO:
+            return "wait_ehlo";
         case SMTP_SERVER_ST_WAIT_MAIL:
             return "wait_mail";
         case SMTP_SERVER_ST_WAIT_RCPT:
@@ -122,7 +121,20 @@ static int handle_rset(context_t *context)
 
 static int handle_vrfy(context_t *context)
 {
-    return handle(context, SMTP_SERVER_EV_VRFY);
+    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+        return -1;
+    }
+
+    if (buffer_space(&context->in_message) == 0) {
+        buffer_drop_read(&context->in_message);
+    }
+
+    if (BUFFER_TAILQ_PUSH_BACK_STRING(&context->out_message_queue,
+            "502 Command not implemented" CRLF) < 0) {
+        return -1;
+    }
+
+    return 0;
 }
 
 static int handle_noop(context_t *context)
@@ -192,7 +204,7 @@ static int process_command(context_t *context,
 
 #define COMMANDS_END(commands) (commands + sizeof(commands) / sizeof(*commands))
 
-static int init_process_command(context_t *context)
+static int process_command_on_wait_ehlo(context_t *context)
 {
     static const command_t correct_commands[] = {
         {EHLO, handle_ehlo},
@@ -215,7 +227,7 @@ static int init_process_command(context_t *context)
         wrong_commands, COMMANDS_END(wrong_commands));
 }
 
-static int wait_mail_process_command(context_t *context)
+static int process_command_on_wait_mail(context_t *context)
 {
     static const command_t correct_commands[] = {
         {EHLO, handle_ehlo},
@@ -238,7 +250,7 @@ static int wait_mail_process_command(context_t *context)
         wrong_commands, COMMANDS_END(wrong_commands));
 }
 
-static int wait_rcpt_process_command(context_t *context)
+static int process_command_on_wait_rcpt(context_t *context)
 {
     static const command_t correct_commands[] = {
         {EHLO, handle_ehlo},
@@ -261,7 +273,7 @@ static int wait_rcpt_process_command(context_t *context)
         wrong_commands, COMMANDS_END(wrong_commands));
 }
 
-static int wait_rcpt_or_data_process_command(context_t *context)
+static int process_command_on_wait_rcpt_or_data(context_t *context)
 {
     static const command_t correct_commands[] = {
         {DATA, handle_data},
@@ -284,7 +296,7 @@ static int wait_rcpt_or_data_process_command(context_t *context)
         wrong_commands, COMMANDS_END(wrong_commands));
 }
 
-static int wait_more_data_process_command(context_t *context)
+static int process_command_on_wait_more_data(context_t *context)
 {
     if (strncmp(context->command, DATA_END, sizeof(DATA_END) - 1) == 0) {
         return handle_data_end(context);
@@ -293,7 +305,7 @@ static int wait_more_data_process_command(context_t *context)
     }
 }
 
-static int error_process_command(context_t *context)
+static int process_command_on_error(context_t *context)
 {
     static const command_t correct_commands[] = {
         {EHLO, handle_ehlo},
@@ -319,12 +331,29 @@ static int error_process_command(context_t *context)
 int process_client(context_t *context)
 {
     switch (context->state) {
-        case SMTP_SERVER_ST_CONNECTED:
+        case SMTP_SERVER_ST_INIT:
             return handle_begin(context);
         case SMTP_SERVER_ST_DONE:
             return 0;
         default:
             break;
+    }
+
+    struct timeval current_time;
+
+    if (gettimeofday(&current_time, NULL) < 0) {
+        CALL_ERR("gettimeofday");
+        return 0;
+    }
+
+    struct timeval diff;
+    timeval_diff(&diff, &context->last_action_time, &current_time);
+    const long long duration = timeval_to_msec(&diff);
+
+    if (duration > context->settings->timeout) {
+        log_write(context->log, "[%s] timeout after %ld msec",
+            context->uuid, duration);
+        return handle(context, SMTP_SERVER_EV_TIMEOUT);
     }
 
     if (!context->is_wait_transition) {
@@ -365,19 +394,18 @@ int process_client(context_t *context)
     }
 
     switch (context->state) {
-        case SMTP_SERVER_ST_INIT:
-            return init_process_command(context);
+        case SMTP_SERVER_ST_WAIT_EHLO:
+            return process_command_on_wait_ehlo(context);
         case SMTP_SERVER_ST_WAIT_MAIL:
-            return wait_mail_process_command(context);
+            return process_command_on_wait_mail(context);
         case SMTP_SERVER_ST_WAIT_RCPT:
-            return wait_rcpt_process_command(context);
+            return process_command_on_wait_rcpt(context);
         case SMTP_SERVER_ST_WAIT_RCPT_OR_DATA:
-            return wait_rcpt_or_data_process_command(context);
+            return process_command_on_wait_rcpt_or_data(context);
         case SMTP_SERVER_ST_WAIT_MORE_DATA:
-            return wait_more_data_process_command(context);
+            return process_command_on_wait_more_data(context);
         case SMTP_SERVER_ST_ERROR:
-        case SMTP_SERVER_ST_INVALID:
-            return error_process_command(context);
+            return process_command_on_error(context);
         default:
             return -1;
     }

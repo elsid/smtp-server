@@ -2,7 +2,6 @@
 
 #include "log.h"
 #include "parse.h"
-#include "protocol.h"
 
 static const char *parse_first_group(const char *pattern, buffer_t *in_buf,
     size_t *length)
@@ -38,20 +37,17 @@ static const char *parse_first_group(const char *pattern, buffer_t *in_buf,
     return command + offset[group1_begin];
 }
 
-const char *parse_domain(buffer_t *in_buf, size_t *length)
+const char *parse_ehlo_helo(buffer_t *in_buf, size_t *length)
 {
-    static const char pattern[] = "^(?i:ehlo|helo)(?: ([^/]+))?" CRLF;
-    return parse_first_group(pattern, in_buf, length);
+    return parse_first_group(RE_EHLO_HELO, in_buf, length);
 }
 
-const char *parse_reverse_path(buffer_t *in_buf, size_t *length)
+const char *parse_mail(buffer_t *in_buf, size_t *length)
 {
-    static const char pattern[] = "^(?i:mail from):<(?:[^:]*:)?([^>]+)>";
-    return parse_first_group(pattern, in_buf, length);
+    return parse_first_group(RE_MAIL, in_buf, length);
 }
 
-const char *parse_forward_path(buffer_t *in_buf, size_t *length)
+const char *parse_rcpt(buffer_t *in_buf, size_t *length)
 {
-    static const char pattern[] = "^(?i:rcpt to):<(?:[^:]*:)?([^>]+)>";
-    return parse_first_group(pattern, in_buf, length);
+    return parse_first_group(RE_RCPT, in_buf, length);
 }

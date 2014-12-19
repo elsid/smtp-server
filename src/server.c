@@ -220,12 +220,12 @@ static worker_t *select_worker(worker_pool_t *pool)
     size_t next = (end + 1) % pool->size;
 
     if (end != next) {
-        while (end != next && WORKER_RUNNING != pool->workers[next].status) {
+        while (end != next && worker_status(&pool->workers[next]) != WORKER_RUNNING) {
             next = (next + 1) % pool->size;
         }
     }
 
-    if (WORKER_RUNNING == pool->workers[next].status) {
+    if (worker_status(&pool->workers[next]) == WORKER_RUNNING) {
         pool->current = next;
         return &pool->workers[next];
     }
@@ -233,55 +233,6 @@ static worker_t *select_worker(worker_pool_t *pool)
     pool->current = pool->size - 1;
 
     return NULL;
-}
-
-static int send_message(const int fd, const void *data, const size_t size)
-{
-    char iov_data[1] = {0};
-
-    struct iovec iov = {
-        .iov_base = iov_data,
-        .iov_len = sizeof(iov_data)
-    };
-
-    char buffer[CMSG_SPACE(sizeof(int))];
-
-    struct msghdr hdr = {
-        .msg_name = NULL,
-        .msg_namelen = 0,
-        .msg_iov = &iov,
-        .msg_iovlen = iov.iov_len,
-        .msg_control = buffer,
-        .msg_controllen = sizeof(buffer)
-    };
-
-    struct cmsghdr *msg = CMSG_FIRSTHDR(&hdr);
-
-    msg->cmsg_level = SOL_SOCKET;
-    msg->cmsg_type = SCM_RIGHTS;
-    msg->cmsg_len = CMSG_LEN(size);
-
-    memcpy(CMSG_DATA(msg), data, size);
-
-    hdr.msg_controllen = msg->cmsg_len;
-
-    ssize_t written;
-
-    do {
-        written = sendmsg(fd, &hdr, MSG_NOSIGNAL);
-    } while (written < 0 && EINTR == errno);
-
-    if (written < 0) {
-        CALL_ERR("sendmsg");
-        return -1;
-    }
-
-    return 0;
-}
-
-static int send_socket(const int fd, const int sock)
-{
-    return send_message(fd, &sock, sizeof(sock));
 }
 
 static int delegate_client(const int client_sock, worker_pool_t *workers)
@@ -296,11 +247,9 @@ static int delegate_client(const int client_sock, worker_pool_t *workers)
             break;
         }
 
-        if (send_socket(worker->sock, client_sock) == 0) {
+        if (worker_send_socket(worker, client_sock) == 0) {
             break;
         }
-
-        worker->status = WORKER_ERROR;
     }
 
     if (close(client_sock) < 0) {
@@ -315,7 +264,7 @@ static int reinit_bad_workers(worker_pool_t *pool)
     for (size_t i = 0; i < pool->size; ++i) {
         worker_t *worker = &pool->workers[i];
 
-        if (WORKER_RUNNING == worker->status) {
+        if (WORKER_RUNNING == worker->__status) {
             continue;
         }
 
@@ -363,7 +312,7 @@ static int serve_listen_socket(const int listen_sock, worker_pool_t *workers)
     return 0;
 }
 
-static int run_server(const settings_t *settings)
+int server_run(const settings_t *settings)
 {
     if (settings->daemon) {
         const pid_t child = fork();
@@ -420,26 +369,6 @@ static int run_server(const settings_t *settings)
 
     free_worker_pool(&workers);
     log_destroy(&log);
-
-    return result;
-}
-
-int main(int argc, char *argv[])
-{
-    if (argc < 2) {
-        PRINT_STDERR("Usage: %s <config file name>\n", argv[0]);
-        return 1;
-    }
-
-    settings_t settings;
-
-    if (settings_init(&settings, argv[1]) < 0) {
-        return -1;
-    }
-
-    const int result = run_server(&settings);
-
-    settings_destroy(&settings);
 
     return result;
 }

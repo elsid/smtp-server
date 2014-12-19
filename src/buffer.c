@@ -16,10 +16,10 @@ int buffer_init(buffer_t *buf, const size_t size)
 
     memset(data, 0, size);
 
-    buf->data = data;
-    buf->read_pos = 0;
-    buf->write_pos = 0;
-    buf->size = size;
+    buf->__data = data;
+    buf->__read_pos = 0;
+    buf->__write_pos = 0;
+    buf->__size = size;
 
     return 0;
 }
@@ -27,20 +27,20 @@ int buffer_init(buffer_t *buf, const size_t size)
 void buffer_destroy(buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    free(buf->data);
+    assert(buf->__data);
+    free(buf->__data);
 }
 
 void buffer_reset_read(buffer_t *buf)
 {
     assert(NULL != buf);
-    buf->read_pos = 0;
+    buf->__read_pos = 0;
 }
 
 void buffer_reset_write(buffer_t *buf)
 {
     assert(NULL != buf);
-    buf->write_pos = 0;
+    buf->__write_pos = 0;
 }
 
 void buffer_reset(buffer_t *buf)
@@ -52,9 +52,9 @@ void buffer_reset(buffer_t *buf)
 int buffer_resize(buffer_t *buf, const size_t size)
 {
     assert(NULL != buf);
-    assert(buf->data);
+    assert(buf->__data);
 
-    if (buf->read_pos > 0) {
+    if (buf->__read_pos > 0) {
         char *data = malloc(size);
 
         if (NULL == data) {
@@ -62,32 +62,32 @@ int buffer_resize(buffer_t *buf, const size_t size)
             return -1;
         }
 
-        memcpy(data, buf->data + buf->read_pos, buf->size - buf->read_pos);
-        memset(data + buf->size - buf->read_pos, 0, buf->read_pos);
+        memcpy(data, buf->__data + buf->__read_pos, buf->__size - buf->__read_pos);
+        memset(data + buf->__size - buf->__read_pos, 0, buf->__read_pos);
 
-        buf->data = data;
-        buf->write_pos -= buf->read_pos;
-        buf->read_pos = 0;
+        buf->__data = data;
+        buf->__write_pos -= buf->__read_pos;
+        buf->__read_pos = 0;
     } else {
-        char *data = realloc(buf->data, size);
+        char *data = realloc(buf->__data, size);
 
         if (NULL == data) {
-            CALL_ERR_ARGS("realloc", "%p, %lu", buf->data, size);
+            CALL_ERR_ARGS("realloc", "%p, %lu", buf->__data, size);
             return -1;
         }
 
-        buf->data = data;
+        buf->__data = data;
 
-        if (size < buf->read_pos) {
-            buf->read_pos = size;
+        if (size < buf->__read_pos) {
+            buf->__read_pos = size;
         }
     }
 
-    if (size < buf->write_pos) {
-        buf->write_pos = size;
+    if (size < buf->__write_pos) {
+        buf->__write_pos = size;
     }
 
-    buf->size = size;
+    buf->__size = size;
 
     return 0;
 }
@@ -95,57 +95,57 @@ int buffer_resize(buffer_t *buf, const size_t size)
 char *buffer_begin(const buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    return buf->data;
+    assert(buf->__data);
+    return buf->__data;
 }
 
 char *buffer_read_begin(const buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    return buf->data + buf->read_pos;
+    assert(buf->__data);
+    return buf->__data + buf->__read_pos;
 }
 
 char *buffer_write_begin(const buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    return buf->data + buf->write_pos;
+    assert(buf->__data);
+    return buf->__data + buf->__write_pos;
 }
 
 char *buffer_end(const buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    return buf->data + buf->size;
+    assert(buf->__data);
+    return buf->__data + buf->__size;
 }
 
 size_t buffer_space(const buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->write_pos <= buf->size);
-    return buf->size - buf->write_pos;
+    assert(buf->__write_pos <= buf->__size);
+    return buf->__size - buf->__write_pos;
 }
 
 size_t buffer_left(const buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->read_pos <= buf->write_pos);
-    return buf->write_pos - buf->read_pos;
+    assert(buf->__read_pos <= buf->__write_pos);
+    return buf->__write_pos - buf->__read_pos;
 }
 
 void buffer_shift_read(buffer_t *buf, const size_t shift)
 {
     assert(NULL != buf);
-    assert(buf->size >= buf->read_pos + shift);
-    buf->read_pos += shift;
+    assert(buf->__size >= buf->__read_pos + shift);
+    buf->__read_pos += shift;
 }
 
 void buffer_shift_write(buffer_t *buf, const size_t shift)
 {
     assert(NULL != buf);
-    assert(buf->size >= buf->write_pos + shift);
-    buf->write_pos += shift;
+    assert(buf->__size >= buf->__write_pos + shift);
+    buf->__write_pos += shift;
 }
 
 void buffer_write(buffer_t *buf, const void *data, const size_t size)
@@ -166,27 +166,27 @@ void buffer_write_string(buffer_t *buf, const char *string)
 char *buffer_find(const buffer_t *buf, const char *string)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    assert(buf->read_pos <= buf->write_pos);
+    assert(buf->__data);
+    assert(buf->__read_pos <= buf->__write_pos);
     assert(NULL != string);
 
     const size_t len = strlen(string);
 
-    if (len > buf->write_pos - buf->read_pos) {
+    if (len > buf->__write_pos - buf->__read_pos) {
         return buffer_end(buf);
     }
 
-    const size_t end = buf->write_pos - len + 1;
+    const size_t end = buf->__write_pos - len + 1;
 
-    for (size_t i = buf->read_pos; i < end; i++) {
+    for (size_t i = buf->__read_pos; i < end; i++) {
         size_t j = 0;
 
-        while (j < len && buf->data[i + j] == string[j]) {
+        while (j < len && buf->__data[i + j] == string[j]) {
             ++j;
         }
 
         if (j == len) {
-            return &buf->data[i];
+            return &buf->__data[i];
         }
     }
 
@@ -211,14 +211,14 @@ int buffer_shift_read_after(buffer_t *buf, const char *string)
 void buffer_drop_read(buffer_t *buf)
 {
     assert(NULL != buf);
-    assert(buf->data);
-    assert(buf->read_pos <= buf->write_pos);
+    assert(buf->__data);
+    assert(buf->__read_pos <= buf->__write_pos);
 
-    const size_t size = buf->write_pos - buf->read_pos;
+    const size_t size = buf->__write_pos - buf->__read_pos;
 
-    memmove(buf->data, buf->data + buf->read_pos, size);
-    memset(buf->data + size, 0, buf->size - size);
+    memmove(buf->__data, buf->__data + buf->__read_pos, size);
+    memset(buf->__data + size, 0, buf->__size - size);
 
-    buf->read_pos = 0;
-    buf->write_pos = size;
+    buf->__read_pos = 0;
+    buf->__write_pos = size;
 }

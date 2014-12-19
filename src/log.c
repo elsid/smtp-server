@@ -34,7 +34,7 @@ static int log_run(log_t *log)
         return -1;
     }
 
-    FILE *file = fopen(log->file_name, "a+");
+    FILE *file = fopen(log->__file_name, "a+");
 
     if (NULL == file) {
         CALL_ERR("fopen");
@@ -48,7 +48,7 @@ static int log_run(log_t *log)
         .mq_curmsgs = 0
     };
 
-    const mqd_t mq = mq_open(log->queue_name, O_CREAT | O_RDONLY, 0644, &attr);
+    const mqd_t mq = mq_open(log->__queue_name, O_CREAT | O_RDONLY, 0644, &attr);
 
     if (mq < 0) {
         if (fclose(file) < 0) {
@@ -84,7 +84,7 @@ static int log_run(log_t *log)
         result = -1;
     }
 
-    if (mq_unlink(log->queue_name) < 0) {
+    if (mq_unlink(log->__queue_name) < 0) {
         CALL_ERR("mq_unlink");
         result = -1;
     }
@@ -108,12 +108,12 @@ int log_init(log_t *log, const char *file_name)
         return -1;
     }
 
-    if (snprintf(log->queue_name, sizeof(log->queue_name) - 1, "/smtp-server.log") < 0) {
+    if (snprintf(log->__queue_name, sizeof(log->__queue_name) - 1, "/smtp-server.log") < 0) {
         CALL_ERR("snprintf");
         return -1;
     }
 
-    log->file_name = file_name;
+    log->__file_name = file_name;
 
     pid_t writer = fork();
 
@@ -121,33 +121,33 @@ int log_init(log_t *log, const char *file_name)
         CALL_ERR("fork");
         return -1;
     } else if (0 == writer) {
-        log->writer = 0;
-        log->mq = -1;
+        log->__writer = 0;
+        log->__mq = -1;
         exit(log_run(log));
     }
 
-    log->writer = writer;
-    log->mq = -1;
+    log->__writer = writer;
+    log->__mq = -1;
 
     return 0;
 }
 
 void log_destroy(log_t *log)
 {
-    if (mq_send(log->mq, "", 0, 0) < 0) {
+    if (mq_send(log->__mq, "", 0, 0) < 0) {
         CALL_ERR("mq_send");
     }
 
     log_close(log);
 
-    if (waitpid(log->writer, NULL, 0) < 0) {
+    if (waitpid(log->__writer, NULL, 0) < 0) {
         CALL_ERR("waitpid");
     }
 }
 
 int log_open(log_t *log)
 {
-    if (log->mq != -1) {
+    if (log->__mq != -1) {
         PRINT_STDERR("error: log is open %s", "");
         return -1;
     }
@@ -159,14 +159,14 @@ int log_open(log_t *log)
         .mq_curmsgs = 0
     };
 
-    const mqd_t mq = mq_open(log->queue_name, O_CREAT | O_WRONLY, 0644, &attr);
+    const mqd_t mq = mq_open(log->__queue_name, O_CREAT | O_WRONLY, 0644, &attr);
 
     if (mq < 0) {
         CALL_ERR("mq_open");
         return -1;
     }
 
-    log->mq = mq;
+    log->__mq = mq;
 
     return 0;
 }
@@ -175,12 +175,12 @@ int log_close(log_t *log)
 {
     int result = 0;
 
-    if (mq_close(log->mq) < 0) {
+    if (mq_close(log->__mq) < 0) {
         CALL_ERR("mq_close");
         result = -1;
     }
 
-    if (mq_unlink(log->queue_name) < 0) {
+    if (mq_unlink(log->__queue_name) < 0) {
         CALL_ERR("mq_unlink");
         result = -1;
     }
@@ -234,7 +234,7 @@ int log_write(log_t *log, const char *format, ...)
         return -1;
     }
 
-    if (mq_send(log->mq, log_message, strlen(log_message) + 1, 0) < 0) {
+    if (mq_send(log->__mq, log_message, strlen(log_message) + 1, 0) < 0) {
         CALL_ERR("mq_send");
         return -1;
     }

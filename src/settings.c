@@ -46,7 +46,7 @@ static int read_uint16(config_t *config, const char *path, uint16_t *value)
 
 int settings_init(settings_t *settings, const char *file_name)
 {
-    config_t *config = &settings->config;
+    config_t *config = &settings->__config;
     config_init(config);
 
     if (config_read_file(config, file_name) != CONFIG_TRUE) {
@@ -86,5 +86,5 @@ int settings_init(settings_t *settings, const char *file_name)
 
 void settings_destroy(settings_t *settings)
 {
-    config_destroy(&settings->config);
+    config_destroy(&settings->__config);
 }

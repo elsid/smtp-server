@@ -39,29 +39,21 @@ te_smtp_server_state select_next_state(
     return SELECT_NEXT_STATE(handle_rset(state));
 /*  END   == ERROR RSET == DO NOT CHANGE THIS COMMENT  */
 
-/*  START == ERROR VRFY == DO NOT CHANGE THIS COMMENT  */
-    return SELECT_NEXT_STATE(handle_vrfy(state));
-/*  END   == ERROR VRFY == DO NOT CHANGE THIS COMMENT  */
-
-/*  START == CONNECTED BEGIN == DO NOT CHANGE THIS COMMENT  */
+/*  START == INIT BEGIN == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_begin(state));
-/*  END   == CONNECTED BEGIN == DO NOT CHANGE THIS COMMENT  */
+/*  END   == INIT BEGIN == DO NOT CHANGE THIS COMMENT  */
 
-/*  START == INIT EHLO == DO NOT CHANGE THIS COMMENT  */
+/*  START == WAIT EHLO EHLO == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_ehlo(state));
-/*  END   == INIT EHLO == DO NOT CHANGE THIS COMMENT  */
+/*  END   == WAIT EHLO EHLO == DO NOT CHANGE THIS COMMENT  */
 
-/*  START == INIT QUIT == DO NOT CHANGE THIS COMMENT  */
+/*  START == WAIT EHLO QUIT == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_quit(state));
-/*  END   == INIT QUIT == DO NOT CHANGE THIS COMMENT  */
+/*  END   == WAIT EHLO QUIT == DO NOT CHANGE THIS COMMENT  */
 
-/*  START == INIT RSET == DO NOT CHANGE THIS COMMENT  */
+/*  START == WAIT EHLO RSET == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_rset(state));
-/*  END   == INIT RSET == DO NOT CHANGE THIS COMMENT  */
-
-/*  START == INIT VRFY == DO NOT CHANGE THIS COMMENT  */
-    return SELECT_NEXT_STATE(handle_vrfy(state));
-/*  END   == INIT VRFY == DO NOT CHANGE THIS COMMENT  */
+/*  END   == WAIT EHLO RSET == DO NOT CHANGE THIS COMMENT  */
 
 /*  START == WAIT MAIL EHLO == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_ehlo(state));
@@ -75,10 +67,6 @@ te_smtp_server_state select_next_state(
     return SELECT_NEXT_STATE(handle_rset(state));
 /*  END   == WAIT MAIL RSET == DO NOT CHANGE THIS COMMENT  */
 
-/*  START == WAIT MAIL VRFY == DO NOT CHANGE THIS COMMENT  */
-    return SELECT_NEXT_STATE(handle_vrfy(state));
-/*  END   == WAIT MAIL VRFY == DO NOT CHANGE THIS COMMENT  */
-
 /*  START == WAIT RCPT EHLO == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_ehlo(state));
 /*  END   == WAIT RCPT EHLO == DO NOT CHANGE THIS COMMENT  */
@@ -90,10 +78,6 @@ te_smtp_server_state select_next_state(
 /*  START == WAIT RCPT RSET == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_rset(state));
 /*  END   == WAIT RCPT RSET == DO NOT CHANGE THIS COMMENT  */
-
-/*  START == WAIT RCPT VRFY == DO NOT CHANGE THIS COMMENT  */
-    return SELECT_NEXT_STATE(handle_vrfy(state));
-/*  END   == WAIT RCPT VRFY == DO NOT CHANGE THIS COMMENT  */
 
 /*  START == INVALID == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_invalid(state));
@@ -122,10 +106,6 @@ te_smtp_server_state select_next_state(
 /*  START == WAIT RCPT OR DATA RSET == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_rset(state));
 /*  END   == WAIT RCPT OR DATA RSET == DO NOT CHANGE THIS COMMENT  */
-
-/*  START == WAIT RCPT OR DATA VRFY == DO NOT CHANGE THIS COMMENT  */
-    return SELECT_NEXT_STATE(handle_vrfy(state));
-/*  END   == WAIT RCPT OR DATA VRFY == DO NOT CHANGE THIS COMMENT  */
 
 /*  START == WAIT RCPT OR DATA DATA == DO NOT CHANGE THIS COMMENT  */
     return SELECT_NEXT_STATE(handle_data_begin(state));

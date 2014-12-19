@@ -21,17 +21,17 @@ typedef struct recipient_list_entry {
 } recipient_list_entry_t;
 
 typedef struct transaction {
-    int sock;
     const settings_t *settings;
-    char *__domain;
-    char *__reverse_path;
-    struct recipient *first_recipient;
     log_t *log;
-    int is_active;
-    recipient_list_t __recipient_list;
-    char data_filename[256 + 36];
-    struct aiocb __aiocb;
+    char __data_filename[PATH_SIZE];
+    char *__domain;
     char *__header;
+    char *__reverse_path;
+    int __is_active;
+    int __sock;
+    recipient_list_t __recipient_list;
+    struct aiocb __aiocb;
+    struct recipient *__first_recipient;
 } transaction_t;
 
 typedef enum transaction_status {
@@ -57,5 +57,7 @@ transaction_status_t transaction_add_data_status(transaction_t *transaction);
 int transaction_add_header(transaction_t *transaction);
 int transaction_begin(transaction_t *transaction);
 transaction_status_t transaction_commit(transaction_t *transaction);
+int transaction_is_active(const transaction_t *transaction);
+const char *transaction_data_filename(const transaction_t *transaction);
 
 #endif

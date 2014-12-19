@@ -5,18 +5,19 @@ type = reentrant;
 prefix = smtp_server;
 cookie = "void *state";
 
-state = connected, wait_mail, wait_rcpt, wait_rcpt_or_data, wait_more_data, error;
-event = begin, rset, ehlo, mail, rcpt, data, more_data, data_end, quit, vrfy;
+state = wait_ehlo, wait_mail, wait_rcpt, wait_rcpt_or_data, wait_more_data, error;
+event = begin, rset, ehlo, mail, rcpt, data, more_data, data_end, quit, timeout, error;
 transition =
-    { tst = connected; tev = begin; next = init; },
+    { tst = init; tev = begin; next = wait_ehlo; },
     { tst = wait_mail; tev = mail; next = wait_rcpt; },
     { tst = wait_rcpt; tev = rcpt; next = wait_rcpt_or_data; },
     { tst = wait_rcpt_or_data; tev = rcpt; },
     { tst = wait_rcpt_or_data; tev = data; next = wait_more_data; },
     { tst = wait_more_data; tev = more_data; },
     { tst = wait_more_data; tev = data_end; next = wait_mail; },
-    { tst = init; tev = rset; },
+    { tst = wait_ehlo; tev = rset; },
     { tst = "*"; tev = rset; next = wait_mail; },
     { tst = "*"; tev = ehlo; next = wait_mail; },
     { tst = "*"; tev = quit; next = done; },
-    { tst = "*"; tev = vrfy; };
+    { tst = "*"; tev = timeout; next = invalid; },
+    { tst = "*"; tev = error; next = error; };

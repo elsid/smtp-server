@@ -9,12 +9,13 @@
 #include <unistd.h>
 
 #define MAX_MESSAGE_SIZE 4096
+#define PATH_SIZE 256
 
 typedef struct log {
-    const char *file_name;
-    char queue_name[256];
-    pid_t writer;
-    mqd_t mq;
+    const char *__file_name;
+    char __queue_name[PATH_SIZE];
+    pid_t __writer;
+    mqd_t __mq;
 } log_t;
 
 int log_init(log_t *log, const char *file_name);

@@ -21,18 +21,21 @@ HEADERS = $(wildcard src/*.h) src/fsm.h
 SOURCES = $(wildcard src/*.c) src/fsm.c
 OBJECTS = $(patsubst src/%.c, obj/%.o, $(SOURCES))
 
-all: $(PROGRAM)
-
-bin:
-	mkdir bin
+all: $(PROGRAM) _doc
 
 $(PROGRAM): bin $(OBJECTS)
 	$(CC) -o $@ obj/*.o $(LDFLAGS)
 
+bin:
+	mkdir bin
+
+_doc:
+	cd doc && $(MAKE) $(MFLAGS)
+
 obj:
 	mkdir obj
 
-obj/%.o: src/%.c $(HEADERS) obj
+obj/%.o: src/%.c $(HEADERS) obj src/fsm
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 src/fsm: src/fsm.def src/fsm.in
@@ -55,4 +58,5 @@ test_memory: $(PROGRAM)
 	valgrind --leak-check=full --show-leak-kinds=all --trace-children=yes $(PROGRAM)/smtp-server etc/test_system.cfg
 
 clean:
-	rm -f $(PROGRAM) obj/*.o src/fsm.h src/fsm.c src/fsm
+	rm -f $(PROGRAM) obj/*.o src/fsm.h src/fsm.c src/fsm src/fsm-fsm.*
+	cd doc && $(MAKE) clean
