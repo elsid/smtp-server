@@ -9,23 +9,24 @@ TEX = $(wildcard tex/*.tex)
 SVG = $(wildcard inc/*.svg)
 DEF = $(wildcard ../src/*.def)
 
+PDF += inc/title.pdf
 PDF += $(patsubst inc/%.svg, inc/%.pdf, $(SVG))
 PDF += $(patsubst ../src/%.def, inc/%.pdf, $(DEF))
 
-LOGS += ../var/log/test_module_result.log
-LOGS += ../var/log/test_system_result.log
-LOGS += ../var/log/test_memory_result.log
+LOG += ../var/log/test_module_result.log
+LOG += ../var/log/test_system_result.log
+LOG += ../var/log/test_memory_result.log
 
-MAKEFILES += Makefile
-MAKEFILES += ../Makefile
+MAKEFILE += Makefile
+MAKEFILE += ../Makefile
 
-CONFIGS += ../etc/smtp-server.cfg
-CONFIGS += ../etc/test_system.cfg
-CONFIGS += ../etc/test_memory.cfg
+CFG += ../etc/smtp-server.cfg
+CFG += ../etc/test_system.cfg
+CFG += ../etc/test_memory.cfg
 
 all: doc.pdf
 
-doc.pdf: $(TEX) $(PDF) $(MAKEFILES) $(LOGS) $(CONFIGS)
+doc.pdf: $(TEX) $(PDF) $(MAKEFILE) $(LOG) $(CFG)
 	$(PDFLATEX) doc.tex &> /dev/null && \
 	$(PDFLATEX) doc.tex &> /dev/null
 
