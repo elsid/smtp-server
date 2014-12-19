@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bin/smtp-server etc/test_system.cfg &
+bin/smtp-server etc/test_system.cfg > /dev/null 2>&1 &
 
 PID=$!
 

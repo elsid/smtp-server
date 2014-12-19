@@ -15,7 +15,7 @@ TRANSITION_PATTERN = re.compile(
 HEADER = '''
     rankdir = TB;
     ranksep = 1;
-    nodesep = 0.1;
+    nodesep = 0.05;
 '''
 
 def norm(s):

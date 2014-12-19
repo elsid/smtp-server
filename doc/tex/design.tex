@@ -32,7 +32,7 @@ Data end -- при получении маркера конца данных.
 
 \verb;^(?i:ehlo|helo)(?:\s+(<domain>))?\s*\r\n;
 
-\verb;<domain> = [^/\s]+; -- домен клиента.
+\verb;<domain> = [^/\s@]+; -- домен клиента.
 
 \item Команда RSET:
 
@@ -42,13 +42,13 @@ Data end -- при получении маркера конца данных.
 
 \verb;^(?i:mail\s+from):\s*<(?:[^:]*:)?(<reverse-path>)>.*\r\n;
 
-\verb;<reverse-path> = [^>]+; -- адрес отправителя.
+\verb;<reverse-path> = [^>\s@]+@[^>\s@]+; -- адрес отправителя.
 
 \item Команда RCPT:
 
 \verb;^(?i:rcpt\s+to):\s*<(?:[^:]*:)?(<forward-path>)>.*\r\n;
 
-\verb;<forward-path> = [^>]+; -- адрес получателя.
+\verb;<forward-path> = [^>\s@]+@[^>\s@]+; -- адрес получателя.
 
 \item Команда DATA:
 
