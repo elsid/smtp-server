@@ -7,7 +7,7 @@
 #include "signal_handle.h"
 #include "worker.h"
 
-volatile sig_atomic_t done = 0;
+static volatile int done = 0;
 
 static void set_done(int signum)
 {
@@ -60,12 +60,18 @@ static int init_worker_pool(worker_pool_t *pool, const size_t size,
     }
 
     for (size_t i = 0; i < size; ++i) {
-        if (worker_init(&workers[i], settings, log) < 0) {
-            for (size_t j = 0; j < i; ++j) {
-                worker_destroy(&workers[i]);
+        switch (worker_init(&workers[i], settings, log)) {
+            case -1:
+                for (size_t j = 0; j < i; ++j) {
+                    worker_destroy(&workers[i]);
+                    free(workers);
+                    return -1;
+                }
+            case 0:
+                break;
+            case 1:
                 free(workers);
-                return -1;
-            }
+                return 1;
         }
     }
 
@@ -330,8 +336,13 @@ int server_run(const settings_t *settings)
 
     log_t log;
 
-    if (log_init(&log, settings->log) < 0) {
-        return -1;
+    switch (log_init(&log, settings->log)) {
+        case -1:
+            return -1;
+        case 0:
+            break;
+        case 1:
+            return 0;
     }
 
     if (log_open(&log) < 0) {
@@ -348,12 +359,17 @@ int server_run(const settings_t *settings)
 
     worker_pool_t workers;
 
-    if (init_worker_pool(&workers, settings->workers_count, settings, &log) < 0) {
-        if (close(listen_sock) < 0) {
-            CALL_ERR("close");
-        }
-        log_destroy(&log);
-        return -1;
+    switch (init_worker_pool(&workers, settings->workers_count, settings, &log)) {
+        case -1:
+            if (close(listen_sock) < 0) {
+                CALL_ERR("close");
+            }
+            log_destroy(&log);
+            return -1;
+        case 0:
+            break;
+        case 1:
+            return 0;
     }
 
     if (set_server_signals_handle() < 0) {

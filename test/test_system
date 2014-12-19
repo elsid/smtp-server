@@ -1,7 +1,0 @@
-#!/bin/bash
-
-bin/smtp-server etc/test_system.cfg
-test/test_system.py -v
-for pid in $(pgrep smtp-server); do
-    kill -9 $pid
-done

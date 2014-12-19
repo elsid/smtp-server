@@ -52,7 +52,7 @@ static int log_run(log_t *log)
 
     if (mq < 0) {
         if (fclose(file) < 0) {
-            CALL_ERR("mq_unlink");
+            CALL_ERR("fclose");
         }
 
         CALL_ERR("mq_open");
@@ -90,7 +90,7 @@ static int log_run(log_t *log)
     }
 
     if (fclose(file) < 0) {
-        CALL_ERR("mq_unlink");
+        CALL_ERR("fclose");
         result = -1;
     }
 
@@ -123,7 +123,10 @@ int log_init(log_t *log, const char *file_name)
     } else if (0 == writer) {
         log->__writer = 0;
         log->__mq = -1;
-        exit(log_run(log));
+        if (log_run(log) < 0) {
+            return -1;
+        }
+        return 1;
     }
 
     log->__writer = writer;

@@ -1,3 +1,4 @@
+#include <pcre.h>
 #include <sys/param.h>
 
 #include "log.h"

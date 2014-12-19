@@ -5,8 +5,6 @@
 #include "time.h"
 #include "transaction.h"
 
-#define INIT_BUFFER_SIZE 4096
-
 int context_init(context_t *context, const int sock, const settings_t *settings,
     log_t *log)
 {

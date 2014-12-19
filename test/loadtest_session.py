@@ -7,7 +7,7 @@ from time import sleep
 from smtplib import SMTP
 
 HOST = 'localhost'
-PORT = 25253
+PORT = 25252
 
 if __name__ == '__main__':
     message = sys.stdin.read()

@@ -7,7 +7,7 @@ from hamcrest import assert_that, raises, calling, equal_to
 from unittest import TestCase, main
 
 HOST = 'localhost'
-PORT = 25253
+PORT = 25251
 TIMEOUT = 0.2
 COUNT = 3
 
@@ -124,8 +124,8 @@ class RcptTest(TestCase):
             assert_that(smtp.connect(HOST, PORT), equal_to((220, b'Service ready')))
             assert_that(smtp.ehlo(), equal_to((250, b'Ok')))
             assert_that(smtp.mail('from@domain'), equal_to((250, b'Ok')))
-            assert_that(smtp.rcpt(['to%d@domain' % n for n in range(COUNT)]),
-                equal_to((250, b'Ok')))
+            for n in range(COUNT):
+                assert_that(smtp.rcpt(['to%d@domain' % n]), equal_to((250, b'Ok')))
             assert_that(smtp.data('message'), equal_to((250, b'Ok')))
             assert_that(smtp.quit(), equal_to((221, b'Service closing transmission channel')))
 
@@ -204,14 +204,14 @@ class TimeoutTest(TestCase):
             assert_that(calling(smtp.ehlo), raises(SMTPServerDisconnected))
 
 class SpecificCommandTest(TestCase):
-    def test_random_case(self):
+    def test_random_case_should_succeed(self):
         with SMTP() as smtp:
             assert_that(smtp.connect(HOST, PORT), equal_to((220, b'Service ready')))
             smtp.putcmd('EhLo')
             assert_that(smtp.getreply(), equal_to((250, b'Ok')))
             assert_that(smtp.quit(), equal_to((221, b'Service closing transmission channel')))
 
-    def test_leading_spaces(self):
+    def test_leading_spaces_should_succeed(self):
         with SMTP() as smtp:
             assert_that(smtp.connect(HOST, PORT), equal_to((220, b'Service ready')))
             smtp.putcmd(' \t\n \rehlo')

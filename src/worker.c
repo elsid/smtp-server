@@ -393,7 +393,7 @@ static int serve_socket(server_t *server, struct pollfd *pollfd)
 
 static struct pollfd *alloc_pollfds(server_t *server, size_t *count)
 {
-    size_t pollfds_count = (server->pipe_fd < 0 ? 0 : 1) + server->clients_count;
+    const size_t pollfds_count = (server->pipe_fd < 0 ? 0 : 1) + server->clients_count;
 
     if (NULL != count) {
         *count = pollfds_count;
@@ -421,7 +421,7 @@ static struct pollfd *alloc_pollfds(server_t *server, size_t *count)
 
     if (server->pipe_fd >= 0) {
         pollfds[pollfds_count - 1].fd = server->pipe_fd;
-        pollfds[pollfds_count - 1].events = POLLIN | POLLERR | POLLHUP;
+        pollfds[pollfds_count - 1].events = POLLIN | POLLERR| POLLHUP;
         pollfds[pollfds_count - 1].revents = 0;
     }
 
@@ -536,7 +536,7 @@ int worker_init(worker_t *worker, const settings_t *settings, log_t *log)
 {
     int fd[2];
 
-    if (socketpair(PF_UNIX, SOCK_DGRAM, 0, fd) < 0) {
+    if (socketpair(PF_UNIX, SOCK_STREAM, 0, fd) < 0) {
         CALL_ERR("pipe");
         return -1;
     }
@@ -547,19 +547,21 @@ int worker_init(worker_t *worker, const settings_t *settings, log_t *log)
         CALL_ERR("fork");
         return -1;
     } else if (0 == worker_pid) {
-        if (close(fd[1]) < 0) {
+        if (close(fd[0]) < 0) {
             CALL_ERR("close");
         }
 
-        exit(worker_run(fd[0], settings, log));
+        worker_run(fd[1], settings, log);
+
+        return 1;
     }
 
-    if (close(fd[0]) < 0) {
+    if (close(fd[1]) < 0) {
         CALL_ERR("close");
     }
 
     worker->__pid = worker_pid;
-    worker->__sock = fd[1];
+    worker->__sock = fd[0];
     worker->__status = WORKER_RUNNING;
 
     return 0;
@@ -567,6 +569,10 @@ int worker_init(worker_t *worker, const settings_t *settings, log_t *log)
 
 void worker_destroy(worker_t *worker)
 {
+    if (shutdown(worker->__sock, SHUT_RDWR) < 0) {
+        CALL_ERR_ARGS("close", "%d", worker->__sock);
+    }
+
     if (close(worker->__sock) < 0) {
         CALL_ERR_ARGS("close", "%d", worker->__sock);
     }

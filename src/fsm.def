@@ -19,5 +19,4 @@ transition =
     { tst = "*"; tev = rset; next = wait_mail; },
     { tst = "*"; tev = ehlo; next = wait_mail; },
     { tst = "*"; tev = quit; next = done; },
-    { tst = "*"; tev = timeout; next = invalid; },
-    { tst = "*"; tev = error; next = error; };
+    { tst = "*"; tev = timeout; next = invalid; };

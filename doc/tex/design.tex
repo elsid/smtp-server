@@ -15,7 +15,7 @@
 Init -- начальное состояние.
 После приветствия клиента выполняется переход по событию begin.
 Далее сервер принимает команды клиента.
-Любая ошибка вызывает событие error.
+Любая ошибка вызывает событие error, по которому осуществляется переход в состояние error.
 Done -- конечное состояние при корректном завершении сессии.
 Invalid -- конечное состояние при таймауте (событие timeout).
 
@@ -28,45 +28,49 @@ Data end -- при получении маркера конца данных.
 
 Сервер поддерживает следующие команды:
 \begin{itemize}
-\item Команды EHLO и HELO
+\item Команды EHLO и HELO:
 
-\verb;^(?i:ehlo|helo)(?:\s*(<domain>))?\s*\r\n;
+\verb;^(?i:ehlo|helo)(?:\s+(<domain>))?\s*\r\n;
 
-\verb;<domain> = [^/]+; -- домен клиента.
+\verb;<domain> = [^/\s]+; -- домен клиента.
 
-\item Команда RSET
+\item Команда RSET:
 
 \verb;^(?i:rset).*\r\n;
 
-\item Команда MAIL
+\item Команда MAIL:
 
-\verb;^(?i:mail from):\s*<(?:[^:]*:)?(<reverse-path>)>.*\r\n;
+\verb;^(?i:mail\s+from):\s*<(?:[^:]*:)?(<reverse-path>)>.*\r\n;
 
 \verb;<reverse-path> = [^>]+; -- адрес отправителя.
 
-\item Команда RCPT
+\item Команда RCPT:
 
-\verb;^(?i:rcpt to):\s*<(?:[^:]*:)?(<forward-path>)>.*\r\n;
+\verb;^(?i:rcpt\s+to):\s*<(?:[^:]*:)?(<forward-path>)>.*\r\n;
 
 \verb;<forward-path> = [^>]+; -- адрес получателя.
 
-\item Команда DATA
+\item Команда DATA:
 
 \verb;^(?i:data).*\r\n;
 
-\item Строка данных
+\item Строка данных:
 
 \verb;^.*\r\n;
 
-\item Маркер конца данных
+\item Маркер конца данных:
 
 \verb;^\.\r\n;
 
-\item Команда QUIT
+\item Команда QUIT:
 
 \verb;^(?i:quit).*\r\n;
 
-\item Команда VRFY
+\item Команда NOOP:
+
+\verb;^(?i:noop).*\r\n;
+
+\item Команда VRFY (всегда возвращает код ответа 502):
 
 \verb;^(?i:vrfy).*\r\n;
 
@@ -74,15 +78,15 @@ Data end -- при получении маркера конца данных.
 
 \section{Сценарии взаимодействия с сервером}
 
-Основной сценарий SMTP-сессии состоит в выполнении почтовой транзакции (см. рисунок~{fig:session}).
+Основной сценарий SMTP-сессии состоит в выполнении почтовой транзакции (см. рисунок~\ref{fig:session}).
 При этом взаимодействуют главный и подчиненный процессы, которые в свою очередь пишут в журнал.
 Подчиненный процесс работает с хранилищем данных -- Maildir.
 
 \begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\textwidth]{inc/session.pdf}
-	\caption{Сценарий взаимодействия подсистем во время SMTP-сессии}
-	\label{fig:session}
+    \centering
+    \includegraphics[width=\textwidth]{inc/session.pdf}
+    \caption{Сценарий взаимодействия подсистем во время SMTP-сессии}
+    \label{fig:session}
 \end{figure}
 
 \section{Структуры данных}
