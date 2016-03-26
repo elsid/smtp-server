@@ -38,7 +38,7 @@ SOURCES += src/transaction.c
 SOURCES += src/worker.c
 OBJECTS = $(patsubst src/%.c, obj/%.o, $(SOURCES))
 
-all: $(PROGRAM) $(TEST_PARSE) _doc
+all: $(PROGRAM) $(TEST_PARSE)
 
 $(PROGRAM): bin $(OBJECTS) obj/main.o
 	$(CC) -o $@ $(OBJECTS) obj/main.o $(LDFLAGS)
