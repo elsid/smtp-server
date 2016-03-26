@@ -1,0 +1,26 @@
+language: c
+sudo: false
+
+cache:
+  ccache: true
+  directories:
+    - ${HOME}/.ccache
+
+env:
+  global:
+    - USE_C_COMPILERACHE=1
+    - C_COMPILERACHE_COMPRESS=1
+    - C_COMPILERACHE_MAXSIZE=200M
+    - C_COMPILERACHE_CPP2=1
+
+addons:
+  apt:
+    packages:
+      - libuuid-devel
+      - cunit-devel
+      - libconfig-devel
+      - autogen
+
+script:
+  - make -j $(nproc)
+  - make test_parse -j $(nproc)
