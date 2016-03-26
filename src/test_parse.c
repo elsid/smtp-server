@@ -3,8 +3,8 @@
 #include "parse.h"
 
 #define BUFFER_SIZE 4096
-#define DOMAIN "domain.ru"
-#define ADDRESS "some-user@" DOMAIN
+#define TEST_DOMAIN "domain.ru"
+#define ADDRESS "some-user@" TEST_DOMAIN
 
 static buffer_t buffer;
 
@@ -43,22 +43,22 @@ static int clean_suite()
 
 static void test_parse_ehlo_lower_case_should_succeed()
 {
-    POSITIVE_TEST("ehlo " DOMAIN "\r\n", parse_ehlo_helo, DOMAIN);
+    POSITIVE_TEST("ehlo " TEST_DOMAIN "\r\n", parse_ehlo_helo, TEST_DOMAIN);
 }
 
 static void test_parse_ehlo_upper_case_should_succeed()
 {
-    POSITIVE_TEST("EHLO " DOMAIN "\r\n", parse_ehlo_helo, DOMAIN);
+    POSITIVE_TEST("EHLO " TEST_DOMAIN "\r\n", parse_ehlo_helo, TEST_DOMAIN);
 }
 
 static void test_parse_ehlo_mixed_case_should_succeed()
 {
-    POSITIVE_TEST("EhLo " DOMAIN "\r\n", parse_ehlo_helo, DOMAIN);
+    POSITIVE_TEST("EhLo " TEST_DOMAIN "\r\n", parse_ehlo_helo, TEST_DOMAIN);
 }
 
 static void test_parse_ehlo_with_additional_spaces_should_succeed()
 {
-    POSITIVE_TEST("ehlo   " DOMAIN "   \r\n", parse_ehlo_helo, DOMAIN);
+    POSITIVE_TEST("ehlo   " TEST_DOMAIN "   \r\n", parse_ehlo_helo, TEST_DOMAIN);
 }
 
 static void test_parse_ehlo_without_domain_should_return_null()
@@ -68,7 +68,7 @@ static void test_parse_ehlo_without_domain_should_return_null()
 
 static void test_parse_ehlo_without_crlf_should_return_null()
 {
-    NEGATIVE_TEST("ehlo " DOMAIN, parse_ehlo_helo);
+    NEGATIVE_TEST("ehlo " TEST_DOMAIN, parse_ehlo_helo);
 }
 
 static void test_parse_ehlo_empty_should_return_null()
@@ -78,7 +78,7 @@ static void test_parse_ehlo_empty_should_return_null()
 
 static void test_parse_helo_lower_case_should_succeed()
 {
-    POSITIVE_TEST("helo " DOMAIN "\r\n", parse_ehlo_helo, DOMAIN);
+    POSITIVE_TEST("helo " TEST_DOMAIN "\r\n", parse_ehlo_helo, TEST_DOMAIN);
 }
 
 static void test_parse_mail_lower_case_should_succeed()

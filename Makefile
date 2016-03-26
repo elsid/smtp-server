@@ -5,7 +5,7 @@ CC = clang
 CFLAGS += -std=c99
 CFLAGS += -pipe
 CFLAGS += -Wall
-CFLAGS += -O0
+CFLAGS += -O3
 CFLAGS += -g
 CFLAGS += -D_XOPEN_SOURCE
 CFLAGS += -D_BSD_SOURCE
