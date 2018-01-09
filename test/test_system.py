@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#conding: utf-8
+# coding: utf-8
 
 from time import sleep
 from smtplib import SMTP, SMTPResponseException, SMTPServerDisconnected
