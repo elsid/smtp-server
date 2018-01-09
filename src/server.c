@@ -211,7 +211,7 @@ static int accept_connection(log_t *log, const int listen_sock)
 
     char hostname[100];
 
-    if (inet_ntop(AF_INET, &addr.sin_addr, hostname, addr_size) < 0) {
+    if (inet_ntop(AF_INET, &addr.sin_addr, hostname, addr_size) == NULL) {
         CALL_ERR("inet_ntop");
     }
 

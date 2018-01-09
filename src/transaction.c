@@ -232,7 +232,7 @@ static int get_hostname(const int sock, char *hostname, const size_t size,
         return -1;
     }
 
-    if (inet_ntop(AF_INET, &addr.sin_addr, hostname, size - 1) < 0) {
+    if (inet_ntop(AF_INET, &addr.sin_addr, hostname, size - 1) == NULL) {
         CALL_ERR("inet_ntop");
         return -1;
     }

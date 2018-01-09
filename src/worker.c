@@ -164,7 +164,7 @@ static int add_client(server_t *server, const int sock)
 
     char hostname[100];
 
-    if (inet_ntop(AF_INET, &addr.sin_addr, hostname, sizeof(hostname) - 1) < 0) {
+    if (inet_ntop(AF_INET, &addr.sin_addr, hostname, sizeof(hostname) - 1) == NULL) {
         CALL_ERR("inet_ntop");
         return -1;
     }
