@@ -15,7 +15,7 @@ transition_result_t handle_begin(context_t *context)
 
 transition_result_t handle_ehlo(context_t *context)
 {
-    if (context->transaction.__is_active) {
+    if (transaction_is_active(&context->transaction)) {
         transaction_rollback(&context->transaction);
         log_write(context->log, "[%s] rollback transaction", context->uuid);
     }
