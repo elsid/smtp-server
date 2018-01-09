@@ -135,30 +135,30 @@ static write_status_t get_write_status(transaction_t *transaction)
     }
 
     switch (aio_error(&transaction->__aiocb)) {
-    case 0: {
-        if (NULL == transaction->__aiocb.aio_buf) {
+        case 0: {
+            if (NULL == transaction->__aiocb.aio_buf) {
+                return WRITE_DONE;
+            }
+
+            const ssize_t result = aio_return(&transaction->__aiocb);
+
+            if (result < transaction->__aiocb.aio_nbytes) {
+                PRINT_STDERR("written %ld of %lu bytes", result, transaction->__aiocb.aio_nbytes);
+                return WRITE_ERROR;
+            }
+
+            transaction->__aiocb.aio_offset += transaction->__aiocb.aio_nbytes;
+            transaction->__aiocb.aio_buf = NULL;
+
             return WRITE_DONE;
         }
 
-        const ssize_t result = aio_return(&transaction->__aiocb);
+        case EINPROGRESS:
+            return WRITE_WAIT;
 
-        if (result < transaction->__aiocb.aio_nbytes) {
-            PRINT_STDERR("written %ld of %lu bytes", result, transaction->__aiocb.aio_nbytes);
+        default:
+            PRINT_STDERR("error in aio_error: %s", strerror(aio_error(&transaction->__aiocb)));
             return WRITE_ERROR;
-        }
-
-        transaction->__aiocb.aio_offset += transaction->__aiocb.aio_nbytes;
-        transaction->__aiocb.aio_buf = NULL;
-
-        return WRITE_DONE;
-    }
-
-    case EINPROGRESS:
-        return WRITE_WAIT;
-
-    default:
-        PRINT_STDERR("error in aio_error: %s", strerror(aio_error(&transaction->__aiocb)));
-        return WRITE_ERROR;
     }
 }
 
