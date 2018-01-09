@@ -21,8 +21,6 @@ buffer_t *buffer_tailq_front(buffer_tailq_t *tailq);
 void buffer_tailq_pop_front(buffer_tailq_t *tailq);
 int buffer_tailq_empty(buffer_tailq_t *tailq);
 
-#define BUFFER_TAILQ_PUSH_BACK(tailq, data) \
-    buffer_tailq_push_back(tailq, data, sizeof(data))
 #define BUFFER_TAILQ_PUSH_BACK_STRING(tailq, data) \
     buffer_tailq_push_back(tailq, data, sizeof(data) - 1)
 
