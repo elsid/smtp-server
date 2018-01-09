@@ -307,15 +307,17 @@ static int serve_listen_socket(const int listen_sock, worker_pool_t *workers)
 {
     log_write(workers->log, "run server");
 
+    int result = 0;
     while (0 == done) {
         if (single_serve_listen_socket(listen_sock, workers) < 0) {
-            return -1;
+            result = -1;
+            break;
         }
     }
 
     log_write(workers->log, "stop server");
 
-    return 0;
+    return result;
 }
 
 int server_run(const settings_t *settings)
