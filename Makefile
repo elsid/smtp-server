@@ -41,10 +41,10 @@ OBJECTS = $(patsubst src/%.c, obj/%.o, $(SOURCES))
 all: $(PROGRAM) $(TEST_PARSE)
 
 $(PROGRAM): bin $(OBJECTS) obj/main.o
-	$(CC) -o $@ $(OBJECTS) obj/main.o $(LDFLAGS)
+	$(CC) -o $@ $(OBJECTS) obj/main.o $(LDFLAGS) $(CFLAGS)
 
 $(TEST_PARSE): bin $(OBJECTS) obj/test_parse.o
-	$(CC) -o $@ $(OBJECTS) obj/test_parse.o $(LDFLAGS)
+	$(CC) -o $@ $(OBJECTS) obj/test_parse.o $(LDFLAGS) $(CFLAGS)
 
 bin:
 	mkdir bin
