@@ -508,6 +508,7 @@ int transaction_add_header(transaction_t *transaction)
         return -1;
     }
 
+    free_header(transaction);
     transaction->__header = header;
 
     if (transaction_add_data(transaction, header, strlen(header)) < 0) {
