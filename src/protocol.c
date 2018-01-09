@@ -377,12 +377,7 @@ int process_client(context_t *context)
             ++command_begin;
         }
 
-        buffer_shift_read(in_buf, command_begin - buffer_read_begin(in_buf));
-
-        const char *begin = buffer_find(in_buf, " ", sizeof(" ") - 1);
-        const char *command_end = begin == buffer_end(in_buf) ? begin : begin + sizeof(" ") - 1;
-        const size_t command_size = MIN(command_end - command_begin,
-            sizeof(context->command) - 1);
+        const size_t command_size = MIN(buffer_end(in_buf) - command_begin, sizeof(context->command) - 1);
 
         strncpy(context->command, command_begin, command_size);
         context->command[command_size] = '\0';

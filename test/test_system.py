@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import os
+import os.path
+import uuid
+
 from time import sleep
 from smtplib import SMTP, SMTPResponseException, SMTPServerDisconnected
 from hamcrest import assert_that, raises, calling, equal_to
@@ -217,6 +221,21 @@ class SpecificCommandTest(TestCase):
             smtp.putcmd(' \t\n \rehlo')
             assert_that(smtp.getreply(), equal_to((250, b'Ok')))
             assert_that(smtp.quit(), equal_to((221, b'Service closing transmission channel')))
+
+class SystemTest(TestCase):
+    def test_send_real_message_example(self):
+        domain = uuid.uuid4().hex
+        with open('var/loadtest.eml') as f:
+            message = f.read()
+        with SMTP() as smtp:
+            smtp.connect(HOST, PORT)
+            smtp.ehlo()
+            smtp.sendmail('from@domain', ['to@%s' % domain], message)
+            smtp.quit()
+        dir_path = os.path.join('var/mail/test_system', domain, 'to/Maildir/new')
+        message_file_path = os.path.join(dir_path, os.listdir(dir_path)[0])
+        with open(message_file_path) as f:
+            assert_that(f.read().split('\n')[2:], equal_to(message.split('\n')))
 
 if __name__ == '__main__':
     main()
