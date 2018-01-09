@@ -33,7 +33,7 @@ transition_result_t handle_ehlo(context_t *context)
             context->uuid, domain_length, domain);
     }
 
-    if (buffer_shift_read_after(in_buf, CRLF) < 0) {
+    if (buffer_shift_read_after(in_buf, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -46,12 +46,12 @@ transition_result_t handle_ehlo(context_t *context)
 
 transition_result_t handle_rset(context_t *context)
 {
-    if (context->transaction.__is_active) {
+    if (transaction_is_active(&context->transaction)) {
         transaction_rollback(&context->transaction);
         log_write(context->log, "[%s] rollback transaction", context->uuid);
     }
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -64,7 +64,7 @@ transition_result_t handle_rset(context_t *context)
 
 transition_result_t handle_vrfy(context_t *context)
 {
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -87,7 +87,7 @@ transition_result_t handle_mail(context_t *context)
     const char *reverse_path = parse_mail(in_buf, &reverse_path_length);
 
     if (NULL == reverse_path) {
-        if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+        if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
             return TRANSITION_ERROR;
         }
 
@@ -109,7 +109,7 @@ transition_result_t handle_mail(context_t *context)
         return TRANSITION_ERROR;
     }
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -133,7 +133,7 @@ transition_result_t handle_rcpt(context_t *context)
     const char *forward_path = parse_rcpt(in_buf, &forward_path_length);
 
     if (NULL == forward_path) {
-        if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+        if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
             return TRANSITION_ERROR;
         }
 
@@ -151,7 +151,7 @@ transition_result_t handle_rcpt(context_t *context)
         return TRANSITION_ERROR;
     }
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -184,7 +184,7 @@ transition_result_t handle_data_begin(context_t *context)
         }
     }
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -220,8 +220,14 @@ transition_result_t handle_data(context_t *context)
         }
     }
 
+    const char *begin = buffer_find(in_buf, CRLF, sizeof(CRLF) - 1);
+
+    if (begin == buffer_end(in_buf)) {
+        return TRANSITION_ERROR;
+    }
+
     const char *data = buffer_read_begin(in_buf);
-    const size_t data_size = buffer_find(in_buf, CRLF) - data + sizeof(CRLF) - 1;
+    const size_t data_size = begin - data + sizeof(CRLF) - 1;
 
     if (transaction_add_data(&context->transaction, data, data_size) != data_size) {
         return TRANSITION_ERROR;
@@ -248,7 +254,7 @@ transition_result_t handle_data_end(context_t *context)
 
     context->is_wait_transition = 0;
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -268,7 +274,7 @@ transition_result_t handle_data_end(context_t *context)
 
 transition_result_t handle_quit(context_t *context)
 {
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 
@@ -286,7 +292,7 @@ transition_result_t handle_quit(context_t *context)
 
 transition_result_t handle_invalid(context_t *context)
 {
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return TRANSITION_ERROR;
     }
 

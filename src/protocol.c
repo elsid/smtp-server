@@ -121,7 +121,7 @@ static int handle_rset(context_t *context)
 
 static int handle_vrfy(context_t *context)
 {
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return -1;
     }
 
@@ -139,7 +139,7 @@ static int handle_vrfy(context_t *context)
 
 static int handle_noop(context_t *context)
 {
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return -1;
     }
 
@@ -156,7 +156,7 @@ static int handle_wrong_command_sequence(context_t *context)
     log_write(context->log, "[%s] received wrong command %s at state %s",
         context->uuid, context->command, state_string(context->state));
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return -1;
     }
 
@@ -168,7 +168,7 @@ static int handle_unrecognized_command(context_t *context)
     log_write(context->log, "[%s] received unrecognized command %s at state %s",
         context->uuid, context->command, state_string(context->state));
 
-    if (buffer_shift_read_after(&context->in_message, CRLF) < 0) {
+    if (buffer_shift_read_after(&context->in_message, CRLF, sizeof(CRLF) - 1) < 0) {
         return -1;
     }
 
@@ -363,7 +363,7 @@ int process_client(context_t *context)
             return 0;
         }
 
-        const char *end = buffer_find(in_buf, CRLF);
+        const char *end = buffer_find(in_buf, CRLF, sizeof(CRLF) - 1);
 
         if (end == buffer_end(in_buf)) {
             return 0;
@@ -379,7 +379,8 @@ int process_client(context_t *context)
 
         buffer_shift_read(in_buf, command_begin - buffer_read_begin(in_buf));
 
-        const char *command_end = MIN(buffer_find(in_buf, " ") + 1, end + 2);
+        const char *begin = buffer_find(in_buf, " ", sizeof(" ") - 1);
+        const char *command_end = begin == buffer_end(in_buf) ? begin : begin + sizeof(" ") - 1;
         const size_t command_size = MIN(command_end - command_begin,
             sizeof(context->command) - 1);
 

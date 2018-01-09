@@ -25,9 +25,9 @@ size_t buffer_left(const buffer_t *buf);
 void buffer_shift_read(buffer_t *buf, const size_t shift);
 void buffer_shift_write(buffer_t *buf, const size_t shift);
 void buffer_write(buffer_t *buf, const void *data, const size_t size);
-void buffer_write_string(buffer_t *buf, const char *string);
-char *buffer_find(const buffer_t *buf, const char *string);
-int buffer_shift_read_after(buffer_t *buf, const char *string);
+void buffer_write_string(buffer_t *buf, const char *string, const size_t string_size);
+char *buffer_find(const buffer_t *buf, const char *string, const size_t string_size);
+int buffer_shift_read_after(buffer_t *buf, const char *string, const size_t string_size);
 void buffer_drop_read(buffer_t *buf);
 
 #endif

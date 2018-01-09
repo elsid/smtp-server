@@ -157,35 +157,33 @@ void buffer_write(buffer_t *buf, const void *data, const size_t size)
     buffer_shift_write(buf, size);
 }
 
-void buffer_write_string(buffer_t *buf, const char *string)
+void buffer_write_string(buffer_t *buf, const char *string, const size_t string_size)
 {
     assert(NULL != buf);
-    buffer_write(buf, string, strlen(string));
+    buffer_write(buf, string, string_size);
 }
 
-char *buffer_find(const buffer_t *buf, const char *string)
+char *buffer_find(const buffer_t *buf, const char *string, const size_t string_size)
 {
     assert(NULL != buf);
     assert(buf->__data);
     assert(buf->__read_pos <= buf->__write_pos);
     assert(NULL != string);
 
-    const size_t len = strlen(string);
-
-    if (len > buf->__write_pos - buf->__read_pos) {
+    if (string_size > buf->__write_pos - buf->__read_pos) {
         return buffer_end(buf);
     }
 
-    const size_t end = buf->__write_pos - len + 1;
+    const size_t end = buf->__write_pos - string_size + 1;
 
     for (size_t i = buf->__read_pos; i < end; i++) {
         size_t j = 0;
 
-        while (j < len && buf->__data[i + j] == string[j]) {
+        while (j < string_size && buf->__data[i + j] == string[j]) {
             ++j;
         }
 
-        if (j == len) {
+        if (j == string_size) {
             return &buf->__data[i];
         }
     }
@@ -193,17 +191,17 @@ char *buffer_find(const buffer_t *buf, const char *string)
     return buffer_end(buf);
 }
 
-int buffer_shift_read_after(buffer_t *buf, const char *string)
+int buffer_shift_read_after(buffer_t *buf, const char *string, const size_t string_size)
 {
     assert(NULL != buf);
 
-    const char *end = buffer_find(buf, string);
+    const char *begin = buffer_find(buf, string, string_size);
 
-    if (end == buffer_end(buf)) {
+    if (begin == buffer_end(buf)) {
         return -1;
     }
 
-    buffer_shift_read(buf, end - buffer_read_begin(buf) + strlen(string));
+    buffer_shift_read(buf, begin - buffer_read_begin(buf) + string_size);
 
     return 0;
 }

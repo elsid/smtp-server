@@ -21,7 +21,8 @@ static const char *parse_first_group(const char *pattern, buffer_t *in_buf,
     static const size_t group1_end = 3;
     int offset[offset_size];
     const char *command = buffer_read_begin(in_buf);
-    const size_t command_size = MIN(buffer_find(in_buf, CRLF) - command + sizeof(CRLF) - 1, INT_MAX);
+    const char *begin = buffer_find(in_buf, CRLF, sizeof(CRLF) - 1);
+    const size_t command_size = begin == buffer_end(in_buf) ? buffer_left(in_buf) : MIN(begin - command + sizeof(CRLF) - 1, INT_MAX);
     const int count = pcre_exec(regexp, NULL, command, (int) command_size, 0, 0, offset, offset_size);
 
     if (count != 2) {

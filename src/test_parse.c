@@ -23,7 +23,7 @@ static int clean_suite()
     { \
         buffer_shift_read(&buffer, buffer_left(&buffer)); \
         buffer_drop_read(&buffer); \
-        buffer_write_string(&buffer, string); \
+        buffer_write_string(&buffer, string, sizeof(string)); \
         size_t length; \
         const char *result = function(&buffer, &length); \
         CU_ASSERT_NOT_EQUAL_FATAL(result, NULL); \
@@ -35,7 +35,7 @@ static int clean_suite()
     { \
         buffer_shift_read(&buffer, buffer_left(&buffer)); \
         buffer_drop_read(&buffer); \
-        buffer_write_string(&buffer, string); \
+        buffer_write_string(&buffer, string, sizeof(string)); \
         size_t length; \
         const char *result = function(&buffer, &length); \
         CU_ASSERT_EQUAL(result, NULL); \
