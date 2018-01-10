@@ -351,27 +351,25 @@ int server_run(const settings_t *settings)
         return -1;
     }
 
-    const int listen_sock = make_listen_socket(settings->address, settings->port,
-        settings->backlog_size);
-
-    if (listen_sock < 0) {
-        log_destroy(&log);
-        return -1;
-    }
-
     worker_pool_t workers;
 
     switch (init_worker_pool(&workers, settings->workers_count, settings, &log)) {
         case -1:
-            if (close(listen_sock) < 0) {
-                CALL_ERR("close");
-            }
             log_destroy(&log);
             return -1;
         case 0:
             break;
         case 1:
             return 0;
+    }
+
+    const int listen_sock = make_listen_socket(settings->address, settings->port,
+        settings->backlog_size);
+
+    if (listen_sock < 0) {
+        free_worker_pool(&workers);
+        log_destroy(&log);
+        return -1;
     }
 
     if (set_server_signals_handle() < 0) {
