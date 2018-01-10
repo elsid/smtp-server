@@ -102,6 +102,7 @@ static int continue_dump_data(transaction_t *transaction, const char *value,
     const size_t size)
 {
     transaction->__aiocb.aio_buf = (void *) value;
+    transaction->__aiocb.aio_offset += transaction->__aiocb.aio_nbytes;
     transaction->__aiocb.aio_nbytes = size;
     transaction->__aiocb.aio_lio_opcode = LIO_WRITE;
 
@@ -124,6 +125,7 @@ static int begin_dump_data(transaction_t *transaction, const char *value,
 
     transaction->__aiocb.aio_fildes = fd;
     transaction->__aiocb.aio_offset = 0;
+    transaction->__aiocb.aio_nbytes = 0;
 
     return continue_dump_data(transaction, value, size);
 }
@@ -147,7 +149,6 @@ static write_status_t get_write_status(transaction_t *transaction)
                 return WRITE_ERROR;
             }
 
-            transaction->__aiocb.aio_offset += transaction->__aiocb.aio_nbytes;
             transaction->__aiocb.aio_buf = NULL;
 
             return WRITE_DONE;
