@@ -375,17 +375,20 @@ int server_run(const settings_t *settings)
     }
 
     if (set_server_signals_handle() < 0) {
+        free_worker_pool(&workers);
         if (close(listen_sock) < 0) {
             CALL_ERR("close");
         }
         log_destroy(&log);
-        free_worker_pool(&workers);
         return -1;
     }
 
     const int result = serve_listen_socket(listen_sock, &workers);
 
     free_worker_pool(&workers);
+    if (close(listen_sock) < 0) {
+        CALL_ERR("close");
+    }
     log_destroy(&log);
 
     return result;
