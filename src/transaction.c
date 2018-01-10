@@ -466,22 +466,16 @@ void transaction_reset_data(transaction_t *transaction)
 ssize_t transaction_add_data(transaction_t *transaction, const char *value,
     const size_t size)
 {
-    switch (get_write_status(transaction)) {
-        case WRITE_DONE:
-        case WRITE_NOT_STARTED: {
-            if (async_dump_data(transaction, value, size) == TRANSACTION_ERROR) {
-                return -1;
-            }
-
+    switch (async_dump_data(transaction, value, size)) {
+        case TRANSACTION_DONE:
             return size;
-        }
-
-        case WRITE_WAIT:
+        case TRANSACTION_WAIT:
             return 0;
-
-        default:
-            return -1;
+        case TRANSACTION_ERROR:
+            break;
     }
+
+    return -1;
 }
 
 transaction_status_t transaction_add_data_status(transaction_t *transaction)
