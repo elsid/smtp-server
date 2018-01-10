@@ -331,6 +331,7 @@ static char *generate_header(transaction_t *transaction)
     if (snprintf(header, size, RETURN_PATH_HEADER RECIEVED_HEADER,
             return_path, from_domain, from_tcp, by_domain, by_tcp, via, for_,
             date) < 0) {
+        free(header);
         CALL_ERR_ARGS("snprintf", "%s %lu %s %s %s %s %s %s %s %s",
             RETURN_PATH_HEADER RECIEVED_HEADER, size, return_path, from_domain,
             from_tcp, by_domain, by_tcp, via, for_, date);
@@ -430,16 +431,12 @@ int transaction_add_forward_path(transaction_t *transaction, const char *value,
 
     if (NULL == forward_path) {
         CALL_ERR_ARGS("malloc", "%lu", length + 1);
+        free(item);
         return -1;
     }
 
     memcpy(forward_path, value, length);
     forward_path[length] = '\0';
-
-    if (NULL == forward_path) {
-        free(item);
-        return -1;
-    }
 
     item->recipient.address = forward_path;
 
