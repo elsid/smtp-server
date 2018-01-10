@@ -108,7 +108,7 @@ int log_init(log_t *log, const char *file_name)
         return -1;
     }
 
-    if (snprintf(log->__queue_name, sizeof(log->__queue_name) - 1, "/smtp-server.log") < 0) {
+    if (snprintf(log->__queue_name, sizeof(log->__queue_name), "/smtp-server.log") < 0) {
         CALL_ERR("snprintf");
         return -1;
     }
@@ -231,7 +231,7 @@ int log_write(log_t *log, const char *format, ...)
 
     char log_message[MAX_MESSAGE_SIZE];
 
-    if (snprintf(log_message, sizeof(log_message) - 1, "[%s.%06ld] [%d] %s\n",
+    if (snprintf(log_message, sizeof(log_message), "[%s.%06ld] [%d] %s\n",
             time_string, timeval.tv_usec, getpid(), user_message) < 0) {
         CALL_ERR("strftime");
         return -1;

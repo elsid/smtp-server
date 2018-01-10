@@ -8,7 +8,7 @@ static int make_path(const char *path, const __mode_t mode)
 {
     char tmp[PATH_SIZE];
 
-    if (snprintf(tmp, sizeof(tmp),"%s", path) < 0) {
+    if (snprintf(tmp, sizeof(tmp), "%s", path) < 0) {
         CALL_ERR("snprintf");
         return -1;
     }
@@ -56,8 +56,8 @@ int maildir_init(maildir_t *maildir, const char *path, const char *recipient)
     const char *domain = recipient_delim + 1;
 
     memset(maildir->__path, 0, sizeof(maildir->__path));
-    strcpy(maildir->__path, path);
-    sprintf(maildir->__path + strlen(maildir->__path), "/%s/", domain);
+    strncpy(maildir->__path, path, sizeof(maildir->__path));
+    snprintf(maildir->__path + path_len, sizeof(maildir->__path) - path_len, "/%s/", domain);
     strncpy(maildir->__path + strlen(maildir->__path), recipient, recipient_delim - recipient);
     strcat(maildir->__path, "/Maildir");
 
@@ -67,7 +67,7 @@ int maildir_init(maildir_t *maildir, const char *path, const char *recipient)
     for (size_t i = 0; i < sub_paths_count; ++i) {
         char full_path[PATH_SIZE];
 
-        if (sprintf(full_path, "%s/%s", maildir->__path, sub_paths[i]) < 0) {
+        if (snprintf(full_path, sizeof(full_path), "%s/%s", maildir->__path, sub_paths[i]) < 0) {
             return -1;
         }
 
@@ -86,7 +86,7 @@ int maildir_create_file(const maildir_t *maildir, const char *filename)
 {
     char file_path[PATH_SIZE];
 
-    if (sprintf(file_path, "%s/tmp/%s", maildir->__path, filename) < 0) {
+    if (snprintf(file_path, sizeof(file_path), "%s/tmp/%s", maildir->__path, filename) < 0) {
         CALL_ERR("snprintf");
         return -1;
     }
@@ -105,7 +105,7 @@ int maildir_remove_file(const maildir_t *maildir, const char *filename)
 {
     char tmp_file_path[PATH_SIZE];
 
-    if (sprintf(tmp_file_path, "%s/tmp/%s", maildir->__path, filename) < 0) {
+    if (snprintf(tmp_file_path, sizeof(tmp_file_path), "%s/tmp/%s", maildir->__path, filename) < 0) {
         CALL_ERR_ARGS("open", "%s %s %s", "%s/tmp/%s", maildir->__path, filename);
         return -1;
     }
@@ -122,14 +122,14 @@ int maildir_move_to_new(const maildir_t *maildir, const char *filename)
 {
     char tmp_file_path[PATH_SIZE];
 
-    if (sprintf(tmp_file_path, "%s/tmp/%s", maildir->__path, filename) < 0) {
+    if (snprintf(tmp_file_path, sizeof(tmp_file_path), "%s/tmp/%s", maildir->__path, filename) < 0) {
         CALL_ERR_ARGS("open", "%s %s %s", "%s/tmp/%s", maildir->__path, filename);
         return -1;
     }
 
     char new_file_path[PATH_SIZE];
 
-    if (sprintf(new_file_path, "%s/new/%s", maildir->__path, filename) < 0) {
+    if (snprintf(new_file_path, sizeof(new_file_path), "%s/new/%s", maildir->__path, filename) < 0) {
         CALL_ERR_ARGS("open", "%s %s %s", "%s/new/%s", maildir->__path, filename);
         return -1;
     }
@@ -147,14 +147,14 @@ int maildir_clone_file(const maildir_t *src, const maildir_t *dst,
 {
     char src_file_path[PATH_SIZE];
 
-    if (sprintf(src_file_path, "%s/new/%s", src->__path, filename) < 0) {
+    if (snprintf(src_file_path, sizeof(src_file_path), "%s/new/%s", src->__path, filename) < 0) {
         CALL_ERR_ARGS("open", "%s %s %s", "%s/new/%s", src->__path, filename);
         return -1;
     }
 
     char dst_file_path[PATH_SIZE];
 
-    if (sprintf(dst_file_path, "%s/new/%s", dst->__path, filename) < 0) {
+    if (snprintf(dst_file_path, sizeof(dst_file_path), "%s/new/%s", dst->__path, filename) < 0) {
         CALL_ERR_ARGS("open", "%s %s %s", "%s/new/%s", dst->__path, filename);
         return -1;
     }

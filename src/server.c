@@ -109,7 +109,7 @@ static struct addrinfo *make_addrinfo_list(const char *addr, const uint16_t port
     char service[6];
 
     memset(service, 0, sizeof(service));
-    sprintf(service, "%u", port);
+    snprintf(service, sizeof(service), "%u", port);
 
     if (getaddrinfo(wildcard(addr), service, &hints, &list) < 0) {
         CALL_ERR("getaddrinfo");

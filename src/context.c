@@ -31,7 +31,7 @@ int context_init(context_t *context, const int sock, const settings_t *settings,
     uuid_generate(uuid);
 
     for (size_t i = 0; i < sizeof(uuid); ++i) {
-        sprintf(context->uuid + 2 * i, "%02x", uuid[i]);
+        snprintf(context->uuid + 2 * i, sizeof(context->uuid) - 2 * i, "%02x", uuid[i]);
     }
 
     context->uuid[sizeof(context->uuid) - 1] = '\0';
