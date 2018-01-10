@@ -131,15 +131,20 @@ static int bind_socket(struct addrinfo *list)
             continue;
         }
 
-        const int sock_flags = fcntl(sock, F_GETFL, 0);
+        const int so_reuseaddr = 1;
 
-        if (sock_flags < 0) {
-            CALL_ERR("1 fcntl");
+        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr, sizeof(so_reuseaddr)) < 0) {
+            CALL_ERR_ARGS("setsockopt", "%d", SO_REUSEADDR);
             return -1;
         }
 
-        if (fcntl(sock, F_SETFL, sock_flags | SO_REUSEADDR) < 0) {
-            CALL_ERR("2 fcntl");
+        const struct linger so_linger = {
+            .l_onoff = 0,
+            .l_linger = 0
+        };
+
+        if (setsockopt(sock, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger)) < 0) {
+            CALL_ERR_ARGS("setsockopt", "%d", SO_LINGER);
             return -1;
         }
 
