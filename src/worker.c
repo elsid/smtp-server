@@ -251,10 +251,6 @@ static int serve_client_in(context_t *context)
 {
     buffer_t *in_buf = &context->in_message;
 
-    if (buffer_space(&context->in_message) == 0) {
-        buffer_drop_read(&context->in_message);
-    }
-
     while (1) {
         const size_t space = buffer_space(in_buf);
 
