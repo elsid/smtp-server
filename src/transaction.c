@@ -540,7 +540,7 @@ transaction_status_t transaction_commit(transaction_t *transaction)
     }
 
     switch (get_write_status(transaction)) {
-        case WRITE_DONE:
+        case WRITE_DONE: {
             if (end_write(transaction) < 0) {
                 return TRANSACTION_ERROR;
             }
@@ -571,7 +571,7 @@ transaction_status_t transaction_commit(transaction_t *transaction)
             transaction->__is_active = 0;
 
             return TRANSACTION_DONE;
-
+        }
         case WRITE_WAIT:
             return TRANSACTION_WAIT;
 
